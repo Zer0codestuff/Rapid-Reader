@@ -14,9 +14,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Test
         run: swift test
 
-      - name: Build app bundle
-        run: ./script/build_and_run.sh --build-only
+      - name: Package universal release DMG
+        run: ./script/package_dmg.sh "0.0.0-ci.${{ github.run_number }}"
+
+      - name: Check architectures and version
+        run: |
+          lipo -archs "dist/Rapid Reader.app/Contents/MacOS/RapidReader" | grep -q "x86_64 arm64"
+          plutil -extract CFBundleShortVersionString raw "dist/Rapid Reader.app/Contents/Info.plist"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="${1:-1.0.0}"
+VERSION="${1:?usage: $0 <version>, for example 1.1.0}"
 APP_NAME="Rapid Reader"
 PROCESS_NAME="RapidReader"
 
@@ -14,18 +14,31 @@ DMG_PATH="$PACKAGE_DIR/RapidReader-$VERSION.dmg"
 
 cd "$ROOT_DIR"
 
-"$ROOT_DIR/script/build_and_run.sh" --build-only
+# Optional distribution settings:
+#   DEVELOPER_ID_APPLICATION  "Developer ID Application: Name (TEAMID)" for signing with the hardened runtime.
+#   NOTARY_PROFILE            notarytool keychain profile (xcrun notarytool store-credentials) to notarize and staple.
+# Without them the app is ad-hoc signed and Gatekeeper will ask users to confirm the first launch.
+SIGN_IDENTITY="${DEVELOPER_ID_APPLICATION:-}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-}"
+if [[ -n "$NOTARY_PROFILE" && -z "$SIGN_IDENTITY" ]]; then
+  echo "NOTARY_PROFILE requires DEVELOPER_ID_APPLICATION." >&2
+  exit 1
+fi
+
+APP_VERSION="$VERSION" CONFIGURATION=release UNIVERSAL="${UNIVERSAL:-1}" \
+  "$ROOT_DIR/script/build_and_run.sh" --build-only
 
 if [[ ! -d "$APP_BUNDLE" ]]; then
   echo "Missing app bundle at $APP_BUNDLE" >&2
   exit 1
 fi
 
-if codesign --force --deep --sign - "$APP_BUNDLE" >/dev/null 2>&1; then
-  codesign --verify --deep --strict "$APP_BUNDLE"
+if [[ -n "$SIGN_IDENTITY" ]]; then
+  codesign --force --deep --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP_BUNDLE"
 else
-  echo "Warning: ad-hoc codesigning failed; continuing with unsigned local build." >&2
+  codesign --force --deep --sign - "$APP_BUNDLE"
 fi
+codesign --verify --deep --strict "$APP_BUNDLE"
 
 rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR" "$PACKAGE_DIR"
@@ -41,6 +54,14 @@ hdiutil create \
   "$DMG_PATH"
 
 hdiutil verify "$DMG_PATH"
+
+if [[ -n "$SIGN_IDENTITY" ]]; then
+  codesign --force --timestamp --sign "$SIGN_IDENTITY" "$DMG_PATH"
+fi
+if [[ -n "$NOTARY_PROFILE" ]]; then
+  xcrun notarytool submit "$DMG_PATH" --keychain-profile "$NOTARY_PROFILE" --wait
+  xcrun stapler staple "$DMG_PATH"
+fi
 rm -rf "$STAGING_DIR"
 pkill -x "$PROCESS_NAME" >/dev/null 2>&1 || true
 

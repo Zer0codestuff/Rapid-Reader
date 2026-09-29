@@ -1,0 +1,55 @@
+name: Release
+
+# Pushing a tag such as v1.1.0 builds the DMG and attaches it to a draft release.
+# The owner reviews and publishes the draft manually.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to package, without the leading v
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Test
+        run: swift test
+
+      - name: Package DMG
+        run: ./script/package_dmg.sh "${{ steps.version.outputs.value }}"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RapidReader-${{ steps.version.outputs.value }}
+          path: build/package/RapidReader-${{ steps.version.outputs.value }}.dmg
+
+      - name: Create draft release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "build/package/RapidReader-${{ steps.version.outputs.value }}.dmg" \
+            --draft --title "Rapid Reader ${{ steps.version.outputs.value }}" --generate-notes

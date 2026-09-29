@@ -7,6 +7,10 @@ DISPLAY_NAME="Rapid Reader"
 BUNDLE_ID="com.gabrielemonni.RapidReader"
 MIN_SYSTEM_VERSION="14.0"
 
+# CONFIGURATION=release and UNIVERSAL=1 produce the distributable build (see package_dmg.sh).
+CONFIGURATION="${CONFIGURATION:-debug}"
+UNIVERSAL="${UNIVERSAL:-0}"
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/$DISPLAY_NAME.app"
@@ -19,8 +23,17 @@ INFO_PLIST="$APP_CONTENTS/Info.plist"
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
 
 cd "$ROOT_DIR"
-swift build
-BUILD_DIR="$(swift build --show-bin-path)"
+
+LATEST_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo v1.0.0)"
+APP_VERSION="${APP_VERSION:-${LATEST_TAG#v}}"
+BUILD_NUMBER="${BUILD_NUMBER:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}"
+
+BUILD_FLAGS=(-c "$CONFIGURATION")
+if [[ "$UNIVERSAL" == "1" ]]; then
+  BUILD_FLAGS+=(--arch arm64 --arch x86_64)
+fi
+swift build "${BUILD_FLAGS[@]}"
+BUILD_DIR="$(swift build "${BUILD_FLAGS[@]}" --show-bin-path)"
 BUILD_BINARY="$BUILD_DIR/$APP_NAME"
 
 rm -rf "$APP_BUNDLE"
@@ -35,6 +48,10 @@ elif [[ -d "$BUILD_DIR/RapidReader_RapidReader.resources" ]]; then
   RESOURCE_DIR="$BUILD_DIR/RapidReader_RapidReader.resources"
 fi
 
+# SwiftPM emits a nested bundle on macOS; the app reads its resources from Contents/Resources.
+if [[ -d "$RESOURCE_DIR/Contents/Resources" ]]; then
+  RESOURCE_DIR="$RESOURCE_DIR/Contents/Resources"
+fi
 if [[ -n "$RESOURCE_DIR" ]] && compgen -G "$RESOURCE_DIR/*" >/dev/null; then
   cp -R "$RESOURCE_DIR/"* "$APP_RESOURCES/"
 fi
@@ -60,6 +77,14 @@ cat >"$INFO_PLIST" <<PLIST
   <string>AppIcon</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$APP_VERSION</string>
+  <key>CFBundleVersion</key>
+  <string>$BUILD_NUMBER</string>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.productivity</string>
   <key>LSMinimumSystemVersion</key>
   <string>$MIN_SYSTEM_VERSION</string>
   <key>NSHighResolutionCapable</key>

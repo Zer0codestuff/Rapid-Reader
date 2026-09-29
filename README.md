@@ -25,7 +25,7 @@ The latest DMG is attached to the GitHub release for this repository.
 3. Drag `Rapid Reader.app` into `Applications`.
 4. Launch Rapid Reader.
 
-The public DMG is ad-hoc signed for local distribution. If macOS blocks the first launch because the app is not notarized, open **System Settings -> Privacy & Security** and allow the app after your first launch attempt.
+The DMG contains a universal app for Apple Silicon and Intel Macs. Unless a release says it is notarized, the app is ad-hoc signed: if macOS blocks the first launch, open **System Settings -> Privacy & Security** and allow the app after your first launch attempt.
 
 ## Build From Source
 
@@ -53,13 +53,27 @@ Run tests:
 swift test
 ```
 
-Create a local DMG:
+Create a universal release DMG (release configuration, arm64 and x86_64, version and build number in `Info.plist`):
 
 ```bash
-./script/package_dmg.sh 1.0.0
+./script/package_dmg.sh 1.1.0
 ```
 
-The packaged app is written to `dist/Rapid Reader.app`, and the DMG is written to `build/package/`.
+The packaged app is written to `dist/Rapid Reader.app`, and the DMG is written to `build/package/`. `build_and_run.sh` accepts the same settings through `CONFIGURATION=release`, `UNIVERSAL=1`, `APP_VERSION`, and `BUILD_NUMBER`.
+
+Optional signing and notarization, with credentials on the build Mac:
+
+```bash
+DEVELOPER_ID_APPLICATION="Developer ID Application: Name (TEAMID)" \
+NOTARY_PROFILE=rapid-reader-notary \
+./script/package_dmg.sh 1.1.0
+```
+
+`NOTARY_PROFILE` is a keychain profile created with `xcrun notarytool store-credentials`.
+
+## Releases
+
+Pushing a tag such as `v1.1.0` runs `.github/workflows/release.yml`, which tests, packages the DMG, and attaches it to a draft GitHub release for review. The workflow can also be started manually to build a DMG artifact without creating a release. CI signs ad-hoc; Developer ID signing and notarization currently run locally.
 
 ## Keyboard And Reader Controls
 

@@ -6,7 +6,7 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 
 - `swift test` runs the core regression tests.
 - `./script/build_and_run.sh --build-only` builds the app bundle; omit the flag to launch.
-- `./script/package_dmg.sh <version>` packages a DMG.
+- `./script/package_dmg.sh <version>` packages a universal (arm64 + x86_64) release DMG with version and build number in the plist. Optional `DEVELOPER_ID_APPLICATION` and `NOTARY_PROFILE` sign with the hardened runtime and notarize.
 - Use `RAPID_READER_LIBRARY_DIR` pointing to a temporary folder for runtime QA. Never test against the user's library. Launch with `open -n --env RAPID_READER_LIBRARY_DIR=... "dist/Rapid Reader.app"` so any instance started by `open` also uses it.
 - Work on `improvements`. The user authorized all fixes and product ideas from T3 thread `6bd0906d-c9c0-40ef-949f-0e1a24d5db09`, with a separate commit and push after each point. New ideas need approval. Do not merge or publish a release without instructions.
 
@@ -27,7 +27,7 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 - Reader arrow/space shortcuts are scoped to the active reader window and excluded from text fields, controls, and sheets. Native search-field cursor behavior was checked.
 - RSVP and text mode share normalized UTF-16 token ranges; text mode caches its document and updates only the current highlight.
 - Validation: 41 tests pass, including playback timing and session lifetime. On this Mac, 20 lookups of 28,000 words fell from 416 ms with repeated tokenization to 0.013 ms with cached tokens. This is a core benchmark, not whole-app CPU.
-- Remaining authorized work: Italian localization; release/universal packaging and CI; update support.
+- Remaining authorized work: Italian localization; update support.
 - Developer ID signing, notarization, and signed update publication require the owner's credentials. Implement and verify the local workflow first, then report any missing setup.
 
 ## Constraints

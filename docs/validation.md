@@ -82,3 +82,10 @@
 - Native app with an isolated library: 4 s of playback at 350 WPM recorded 21 words (about 304 WPM measured, consistent with punctuation pauses). The sheet was checked with seeded history: tiles, 14-day chart, hover tooltip kept inside the plot, day labels aligned under their bars.
 - Chart colors: the brand amber #F29E38 failed contrast on light (2.1:1) and the lightness band on dark in `validate_palette.js`; #C2700F (light) and #CC7A18 (dark) pass both.
 - Quitting during playback now pauses the session and flushes progress before exit, so the last run and position are saved.
+
+## Release packaging
+
+- `./script/package_dmg.sh 1.1.0-test` built a release DMG; `lipo -archs` reports `x86_64 arm64`, and `Info.plist` has `CFBundleShortVersionString` 1.1.0-test and `CFBundleVersion` 21. The universal release build took 77 s on this Mac.
+- Fixed resource packaging: SwiftPM resources had been copied to `Contents/Resources/Contents/Resources`, so the empty-library artwork was missing. The release build now shows it (checked with an isolated empty library).
+- Only the arm64 slice was run. The x86_64 slice was built but not launched on an Intel Mac or under Rosetta.
+- Workflow YAML parses. The workflows have not run on GitHub from this branch; tags and releases were not created. Developer ID signing and notarization paths are implemented but untested because no credentials were used.
