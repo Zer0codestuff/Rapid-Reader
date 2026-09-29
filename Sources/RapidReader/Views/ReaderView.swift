@@ -47,7 +47,7 @@ struct ReaderView: View {
                     }
                 ),
                 onToggleFavorite: { library.toggleFavorite(item.id) },
-                onShowNotes: { showingNotes = true }
+                onShowNotes: { session.pause(); showingNotes = true }
             )
 
             Divider()
@@ -122,6 +122,12 @@ struct ReaderView: View {
                 onAdd: {
                     library.addNote(for: item.id, text: noteText)
                     noteText = ""
+                },
+                onUpdate: { library.updateNote(for: item.id, noteID: $0, text: $1) },
+                onDelete: { library.deleteNote(for: item.id, noteID: $0) },
+                onJump: { note in
+                    session.jump(toSection: note.sectionIndex, word: note.wordIndex)
+                    showingNotes = false
                 }
             )
         }
@@ -440,44 +446,3 @@ private struct ControlCluster<Content: View>: View {
     }
 }
 
-private struct NotesSheet: View {
-    let notes: [ReaderNote]
-    @Binding var noteText: String
-    let onAdd: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Notes")
-                .font(.title3.weight(.semibold))
-
-            TextEditor(text: $noteText)
-                .frame(width: 460, height: 96)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.secondary.opacity(0.22))
-                )
-
-            HStack {
-                Spacer()
-                Button("Add Note", action: onAdd)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-
-            Divider()
-
-            List(notes) { note in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(note.text)
-                        .lineLimit(3)
-                    Text("Section \(note.sectionIndex + 1), word \(note.wordIndex + 1)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.vertical, 4)
-            }
-            .frame(width: 460, height: 240)
-        }
-        .padding(24)
-    }
-}

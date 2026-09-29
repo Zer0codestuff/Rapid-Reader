@@ -3,6 +3,8 @@ import SwiftUI
 struct URLImportSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var urlText = ""
+    @State private var submitted = false
+    @FocusState private var isFocused: Bool
     let onImport: (URL) -> Void
 
     var body: some View {
@@ -13,7 +15,7 @@ struct URLImportSheet: View {
             TextField("https://example.com/article", text: $urlText)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 420)
-                .onSubmit(importURL)
+                .focused($isFocused)
 
             HStack {
                 Spacer()
@@ -25,22 +27,24 @@ struct URLImportSheet: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(parsedURL == nil)
-                .keyboardShortcut(.return, modifiers: [])
+                .keyboardShortcut(.defaultAction)
             }
         }
         .padding(24)
+        .onAppear { isFocused = true }
     }
 
     private var parsedURL: URL? {
         let trimmed = urlText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let url = URL(string: trimmed), url.scheme?.hasPrefix("http") == true else {
+        guard let url = URL(string: trimmed), ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.host != nil else {
             return nil
         }
         return url
     }
 
     private func importURL() {
-        guard let parsedURL else { return }
+        guard !submitted, let parsedURL else { return }
+        submitted = true
         onImport(parsedURL)
     }
 }

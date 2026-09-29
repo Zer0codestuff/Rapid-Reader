@@ -38,3 +38,7 @@
 ## Imports and titles
 
 - Duplicate selection and punctuation-only clipboard rejection tests pass. Existing storage tests pass after separating the fixture title from its body. Identical text retains progress; changed text can be imported separately.
+
+## Notes and small UI fixes
+
+- Notes persistence test passed for editing, position retention, reload, and deletion. App build passed with URL focus, a submission guard, and a visible Done action. Native runtime checks continue after the layout/defaults changes.

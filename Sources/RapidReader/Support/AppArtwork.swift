@@ -18,6 +18,7 @@ extension Color {
 
 extension Date {
     var readerRelativeString: String {
+        if abs(timeIntervalSinceNow) < 60 { return String(localized: "Now") }
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: self, relativeTo: Date())

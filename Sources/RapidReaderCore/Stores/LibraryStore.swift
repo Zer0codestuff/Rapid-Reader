@@ -244,6 +244,21 @@ public final class LibraryStore: ObservableObject {
         saveIndex()
     }
 
+    public func updateNote(for id: UUID, noteID: UUID, text: String) {
+        guard let index = items.firstIndex(where: { $0.id == id }),
+              let noteIndex = items[index].notes.firstIndex(where: { $0.id == noteID }) else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        items[index].notes[noteIndex].text = trimmed
+        saveIndex()
+    }
+
+    public func deleteNote(for id: UUID, noteID: UUID) {
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        items[index].notes.removeAll { $0.id == noteID }
+        saveIndex()
+    }
+
     public func deleteItems(at offsets: IndexSet, from visibleItems: [LibraryItem]) {
         guard !isPersistenceBlocked else { return }
         let ids = Set(offsets.compactMap { visibleItems.indices.contains($0) ? visibleItems[$0].id : nil })
