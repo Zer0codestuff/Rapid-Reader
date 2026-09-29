@@ -12,45 +12,24 @@ struct ReaderView: View {
         var id: String { rawValue }
     }
 
-    @State private var sectionIndex: Int
-    @State private var wordIndex: Int
-    @State private var preferences: ReadingPreferences
-    @State private var isPlaying = false
-    @State private var nextAdvanceAt = Date()
+    @StateObject private var session: ReaderSession
     @State private var showingNotes = false
     @State private var noteText = ""
     @State private var readerMode: ReaderMode = .rsvp
 
-    private let ticker = Timer.publish(every: 0.04, on: .main, in: .common).autoconnect()
-
     init(item: RapidReaderCore.LibraryItem, library: LibraryStore) {
         self.item = item
         self.library = library
-        _sectionIndex = State(initialValue: item.progress.sectionIndex)
-        _wordIndex = State(initialValue: item.progress.wordIndex)
-        _preferences = State(initialValue: Self.clampedPreferences(item.preferences))
-    }
-
-    private var safeSectionIndex: Int {
-        min(max(sectionIndex, 0), max(item.sections.count - 1, 0))
+        _session = StateObject(wrappedValue: ReaderSession(
+            sections: item.sections,
+            sectionIndex: item.progress.sectionIndex,
+            wordIndex: item.progress.wordIndex,
+            preferences: item.preferences
+        ))
     }
 
     private var currentSection: BookSection {
-        guard item.sections.indices.contains(safeSectionIndex) else {
-            return BookSection(title: item.title, text: "")
-        }
-        return item.sections[safeSectionIndex]
-    }
-
-    private var words: [String] {
-        TextProcessor.tokenize(currentSection.text)
-    }
-
-    private var displayWords: [String] {
-        guard !words.isEmpty else { return [] }
-        let start = min(max(wordIndex, 0), words.count - 1)
-        let end = min(start + max(preferences.chunkSize, 1), words.count)
-        return Array(words[start..<end])
+        session.currentSection ?? BookSection(title: item.title, text: "")
     }
 
     var body: some View {
@@ -58,12 +37,12 @@ struct ReaderView: View {
             ReaderHeader(
                 item: item,
                 section: currentSection,
-                sectionIndex: safeSectionIndex,
+                sectionIndex: session.sectionIndex,
                 totalSections: item.sections.count,
                 readerMode: Binding(
                     get: { readerMode },
                     set: { mode in
-                        isPlaying = false
+                        session.pause()
                         readerMode = mode
                     }
                 ),
@@ -77,11 +56,11 @@ struct ReaderView: View {
                 if readerMode == .rsvp {
                     Spacer(minLength: 20)
 
-                    RSVPDisplay(words: displayWords, fontSize: preferences.fontSize)
+                    RSVPDisplay(words: session.displayWords, fontSize: session.preferences.fontSize)
                         .accessibilityIdentifier("rsvp-word-display")
 
-                    if preferences.showContext {
-                        ContextStrip(words: words, index: wordIndex)
+                    if session.preferences.showContext {
+                        ContextStrip(words: session.words, index: session.displayIndex)
                             .transition(.opacity)
                     }
 
@@ -89,8 +68,8 @@ struct ReaderView: View {
                 } else {
                     FullTextReaderView(
                         sections: item.sections,
-                        currentSectionIndex: safeSectionIndex,
-                        currentWordIndex: wordIndex,
+                        currentSectionIndex: session.sectionIndex,
+                        currentWordIndex: session.wordIndex,
                         onSelectWord: chooseWord
                     )
                     .padding(.top, 18)
@@ -98,45 +77,42 @@ struct ReaderView: View {
                 }
 
                 ReaderControls(
-                    isPlaying: $isPlaying,
+                    isPlaying: session.isPlaying,
                     sectionIndex: Binding(
-                        get: { safeSectionIndex },
-                        set: { goToSection($0) }
+                        get: { session.sectionIndex },
+                        set: { session.goToSection($0) }
                     ),
                     wordIndex: Binding(
-                        get: { Double(min(max(wordIndex, 0), max(words.count - 1, 0))) },
-                        set: { setWordIndex(Int($0.rounded())) }
+                        get: { Double(session.displayIndex) },
+                        set: { session.setWordIndex(Int($0.rounded())) }
                     ),
-                    preferences: $preferences,
+                    preferences: $session.preferences,
                     sections: item.sections,
-                    maxWordIndex: max(words.count - 1, 0),
+                    maxWordIndex: session.maxWordIndex,
                     onPlayPause: togglePlayback,
-                    onBack: rewind,
-                    onForward: advance
+                    onBack: session.back,
+                    onForward: session.forward
                 )
             }
-            .padding(.horizontal, preferences.focusMode ? 56 : 34)
+            .padding(.horizontal, session.preferences.focusMode ? 56 : 34)
             .padding(.bottom, 26)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(readerBackground)
-        .onReceive(ticker) { now in
-            guard isPlaying, now >= nextAdvanceAt else { return }
-            let delay = intervalForCurrentWord()
-            advance()
-            nextAdvanceAt = Date(timeIntervalSinceNow: delay)
-        }
-        .onChange(of: isPlaying) { _, playing in
-            nextAdvanceAt = Date(timeIntervalSinceNow: playing ? intervalForCurrentWord() : 0)
-            if !playing {
-                library.flushPendingChanges()
+        .onAppear {
+            session.onProgressChange = { section, word in
+                library.updateProgress(for: item.id, sectionIndex: section, wordIndex: word)
             }
         }
         .onDisappear {
+            session.pause()
             library.flushPendingChanges()
         }
-        .onChange(of: preferences) { _, _ in
-            savePreferences()
+        .onChange(of: session.isPlaying) { _, playing in
+            if !playing { library.flushPendingChanges() }
+        }
+        .onChange(of: session.preferences) { _, preferences in
+            library.updatePreferences(for: item.id, preferences)
         }
         .sheet(isPresented: $showingNotes) {
             NotesSheet(
@@ -165,98 +141,15 @@ struct ReaderView: View {
         }
     }
 
-    private func advance() {
-        guard !words.isEmpty else {
-            isPlaying = false
-            return
-        }
-
-        let step = max(preferences.chunkSize, 1)
-        if wordIndex + step < words.count {
-            wordIndex += step
-        } else if safeSectionIndex + 1 < item.sections.count {
-            sectionIndex = safeSectionIndex + 1
-            wordIndex = 0
-        } else {
-            wordIndex = words.count
-            isPlaying = false
-        }
-        persistProgress()
-    }
-
     private func togglePlayback() {
-        if readerMode == .text {
-            readerMode = .rsvp
-        }
-        isPlaying.toggle()
-    }
-
-    private func rewind() {
-        isPlaying = false
-        let step = max(preferences.chunkSize, 1)
-        if wordIndex - step >= 0 {
-            wordIndex -= step
-        } else if safeSectionIndex > 0 {
-            sectionIndex = safeSectionIndex - 1
-            let previousWords = TextProcessor.tokenize(item.sections[sectionIndex].text)
-            wordIndex = max(previousWords.count - 1, 0)
-        } else {
-            wordIndex = 0
-        }
-        persistProgress()
-    }
-
-    private func goToSection(_ index: Int) {
-        isPlaying = false
-        sectionIndex = min(max(index, 0), max(item.sections.count - 1, 0))
-        wordIndex = 0
-        persistProgress()
-    }
-
-    private func setWordIndex(_ index: Int) {
-        isPlaying = false
-        wordIndex = min(max(index, 0), max(words.count - 1, 0))
-        persistProgress()
+        readerMode = .rsvp
+        session.togglePlayback()
     }
 
     private func chooseWord(sectionIndex: Int, wordIndex: Int) {
-        isPlaying = false
-        self.sectionIndex = min(max(sectionIndex, 0), max(item.sections.count - 1, 0))
-        let sectionWords = TextProcessor.tokenize(item.sections[self.sectionIndex].text)
-        self.wordIndex = min(max(wordIndex, 0), max(sectionWords.count - 1, 0))
-        persistProgress()
+        session.jump(toSection: sectionIndex, word: wordIndex)
     }
 
-    private func persistProgress() {
-        library.updateProgress(for: item.id, sectionIndex: safeSectionIndex, wordIndex: wordIndex)
-    }
-
-    private func savePreferences() {
-        let clamped = Self.clampedPreferences(preferences)
-        if clamped != preferences {
-            preferences = clamped
-        }
-        library.updatePreferences(for: item.id, clamped)
-    }
-
-    private static func clampedPreferences(_ preferences: ReadingPreferences) -> ReadingPreferences {
-        ReadingPreferences(
-            wordsPerMinute: min(max(preferences.wordsPerMinute, 100), 900),
-            fontSize: min(max(preferences.fontSize, 42), 110),
-            chunkSize: min(max(preferences.chunkSize, 1), 4),
-            showContext: preferences.showContext,
-            pauseOnPunctuation: preferences.pauseOnPunctuation,
-            focusMode: preferences.focusMode
-        )
-    }
-
-    private func intervalForCurrentWord() -> TimeInterval {
-        let base = 60.0 * Double(max(preferences.chunkSize, 1)) / Double(max(preferences.wordsPerMinute, 1))
-        guard preferences.pauseOnPunctuation, let word = displayWords.last else {
-            return base
-        }
-        return base * RSVPWord(word).punctuationDelayMultiplier
-    }
 }
 
 private struct ReaderHeader: View {
@@ -420,7 +313,7 @@ private struct ContextStrip: View {
 }
 
 private struct ReaderControls: View {
-    @Binding var isPlaying: Bool
+    let isPlaying: Bool
     @Binding var sectionIndex: Int
     @Binding var wordIndex: Double
     @Binding var preferences: ReadingPreferences

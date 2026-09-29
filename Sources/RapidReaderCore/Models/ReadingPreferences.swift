@@ -24,6 +24,14 @@ public struct ReadingPreferences: Codable, Equatable, Sendable {
         self.focusMode = focusMode
     }
 
+    public func clamped() -> ReadingPreferences {
+        var result = self
+        result.wordsPerMinute = min(max(wordsPerMinute, 100), 900)
+        result.fontSize = fontSize.isFinite ? min(max(fontSize, 42), 110) : 72
+        result.chunkSize = min(max(chunkSize, 1), 4)
+        return result
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let defaults = ReadingPreferences()

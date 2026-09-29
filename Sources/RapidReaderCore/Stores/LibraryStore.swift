@@ -307,7 +307,7 @@ public final class LibraryStore: ObservableObject {
 
     private func repairedProgress(_ progress: ReadingProgress, sections: [BookSection]) -> ReadingProgress {
         let sectionIndex = min(max(progress.sectionIndex, 0), max(sections.count - 1, 0))
-        let maxWords = sections.indices.contains(sectionIndex) ? max(sections[sectionIndex].wordCount - 1, 0) : 0
+        let maxWords = sections.indices.contains(sectionIndex) ? sections[sectionIndex].wordCount : 0
         return ReadingProgress(
             sectionIndex: sectionIndex,
             wordIndex: min(max(progress.wordIndex, 0), maxWords),
@@ -316,14 +316,7 @@ public final class LibraryStore: ObservableObject {
     }
 
     private func repairedPreferences(_ preferences: ReadingPreferences) -> ReadingPreferences {
-        ReadingPreferences(
-            wordsPerMinute: min(max(preferences.wordsPerMinute, 100), 900),
-            fontSize: min(max(preferences.fontSize, 42), 110),
-            chunkSize: min(max(preferences.chunkSize, 1), 4),
-            showContext: preferences.showContext,
-            pauseOnPunctuation: preferences.pauseOnPunctuation,
-            focusMode: preferences.focusMode
-        )
+        preferences.clamped()
     }
 
     /// Writes any pending changes to disk immediately.
@@ -334,7 +327,7 @@ public final class LibraryStore: ObservableObject {
 
     /// Coalesces frequent updates such as reading progress into a single write.
     private func scheduleSave() {
-        pendingSave?.cancel()
+        guard pendingSave == nil else { return }
         let delay = saveDelay
         pendingSave = Task { [weak self] in
             try? await Task.sleep(for: delay)
