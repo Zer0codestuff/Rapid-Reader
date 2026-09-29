@@ -12,9 +12,15 @@ struct SettingsView: View {
     @AppStorage("readerDefaultRamp") private var ramp = 0.0
     @AppStorage("readerDefaultLongWords") private var longWords = false
     @AppStorage("readerDefaultRewind") private var rewind = 0
+    @AppStorage(ReaderTheme.storageKey) private var theme: ReaderTheme = .system
 
     var body: some View {
         Form {
+            Section("Appearance") {
+                Picker("Reader theme", selection: $theme) {
+                    ForEach(ReaderTheme.allCases) { Text($0.title).tag($0) }
+                }
+            }
             Section("Reading Defaults") {
                 Stepper("Default speed: \(defaultWPM) WPM", value: $defaultWPM, in: 100...900, step: 25)
                 Slider(value: $defaultFontSize, in: 42...110, step: 2) {

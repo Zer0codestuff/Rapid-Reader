@@ -70,3 +70,8 @@
 
 - `swift test`: 38 tests passed. Covered word index mapping across sections, case and diacritic folding, phrases across words, result limits, and context trimming.
 - Native app with an isolated library: Cmd+F opens the popover with the field focused (focus needed a short delay because the popover is not key on appear). "vocabulary appears" returned 200 matches in a 2,800-word document; clicking the fourth result closed the popover and RSVP showed "vocabulary".
+
+## Reader themes
+
+- `swift build` passed. Native screenshots with an isolated library checked System, Light, Dark, and Sepia in RSVP mode, and Sepia and Dark in text mode (text color and current-word highlight). The setting was restored to System after QA.
+- The progress slider drew one tick per word, which formed a dense striped bar that stood out on light backgrounds. It now uses a continuous track; the value is still rounded to a word index.

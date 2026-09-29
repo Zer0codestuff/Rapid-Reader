@@ -19,6 +19,8 @@ struct ReaderView: View {
     @State private var searchQuery = ""
     @State private var noteText = ""
     @State private var readerMode: ReaderMode = .rsvp
+    @AppStorage(ReaderTheme.storageKey) private var theme: ReaderTheme = .system
+    @Environment(\.colorScheme) private var systemColorScheme
 
     init(item: RapidReaderCore.LibraryItem, library: LibraryStore) {
         self.item = item
@@ -80,6 +82,8 @@ struct ReaderView: View {
                         sections: item.sections,
                         currentSectionIndex: session.sectionIndex,
                         currentWordIndex: session.wordIndex,
+                        textColor: theme.ink ?? .labelColor,
+                        appearance: theme.appearance,
                         onSelectWord: chooseWord
                     )
                     .padding(.top, 18)
@@ -125,6 +129,8 @@ struct ReaderView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(readerBackground)
+        .foregroundStyle(theme.ink.map { Color(nsColor: $0) } ?? Color.primary)
+        .environment(\.colorScheme, theme.colorScheme ?? systemColorScheme)
         .background(ReaderKeyboardHandler(onPlayPause: togglePlayback, onBack: session.back, onForward: session.forward))
         .onAppear {
             session.onProgressChange = { section, word in
@@ -161,7 +167,7 @@ struct ReaderView: View {
 
     private var readerBackground: some View {
         ZStack {
-            Color(nsColor: .textBackgroundColor)
+            theme.background
             LinearGradient(
                 colors: [
                     Color.readerAmber.opacity(0.10),
@@ -406,7 +412,7 @@ private struct ReaderControls: View {
             }
 
             VStack(spacing: 12) {
-                Slider(value: progressBinding, in: progressRange, step: 1)
+                Slider(value: progressBinding, in: progressRange)
                     .accessibilityIdentifier("progress-slider")
                     .disabled(maxWordIndex <= 0)
 

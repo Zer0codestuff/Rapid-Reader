@@ -6,10 +6,13 @@ struct FullTextReaderView: NSViewRepresentable {
     let sections: [BookSection]
     let currentSectionIndex: Int
     let currentWordIndex: Int
+    let textColor: NSColor
+    let appearance: NSAppearance?
     let onSelectWord: (Int, Int) -> Void
 
     final class Coordinator {
         var sections: [BookSection] = []
+        var textColor: NSColor?
         var selectedRange: NSRange?
     }
 
@@ -47,11 +50,13 @@ struct FullTextReaderView: NSViewRepresentable {
 
         let coordinator = context.coordinator
         textView.onSelectWord = onSelectWord
-        if coordinator.sections != sections {
-            let document = TextDocumentBuilder.makeDocument(sections: sections)
+        scrollView.appearance = appearance
+        if coordinator.sections != sections || coordinator.textColor != textColor {
+            let document = TextDocumentBuilder.makeDocument(sections: sections, textColor: textColor)
             textView.wordRanges = document.wordRanges
             textView.textStorage?.setAttributedString(document.attributedText)
             coordinator.sections = sections
+            coordinator.textColor = textColor
             coordinator.selectedRange = nil
         }
         let sectionRanges = textView.wordRanges.filter { $0.sectionIndex == currentSectionIndex }
@@ -82,7 +87,8 @@ private struct BuiltTextDocument {
 
 private enum TextDocumentBuilder {
     static func makeDocument(
-        sections: [BookSection]
+        sections: [BookSection],
+        textColor: NSColor
     ) -> BuiltTextDocument {
         let output = NSMutableAttributedString()
         var wordRanges: [TextWordRange] = []
@@ -95,12 +101,12 @@ private enum TextDocumentBuilder {
 
         let bodyAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 18, weight: .regular),
-            .foregroundColor: NSColor.labelColor,
+            .foregroundColor: textColor,
             .paragraphStyle: bodyStyle
         ]
         let headingAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 22, weight: .semibold),
-            .foregroundColor: NSColor.labelColor,
+            .foregroundColor: textColor,
             .paragraphStyle: headingStyle
         ]
         for (sectionIndex, section) in sections.enumerated() {
