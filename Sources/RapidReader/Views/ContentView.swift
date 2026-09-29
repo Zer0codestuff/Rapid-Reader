@@ -4,7 +4,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ContentView: View {
-    @StateObject private var library = LibraryStore()
+    @ObservedObject var library: LibraryStore
     @State private var searchText = ""
     @State private var showingFileImporter = false
     @State private var showingURLImporter = false
@@ -46,6 +46,24 @@ struct ContentView: View {
             }
         }
         .navigationTitle("Rapid Reader")
+        .focusedSceneValue(\.importActions, ImportActions(
+            files: { showingFileImporter = true },
+            article: { showingURLImporter = true },
+            clipboard: importClipboard
+        ))
+        .dropDestination(for: URL.self) { urls, _ in
+            guard !urls.isEmpty else { return false }
+            Task { @MainActor in
+                syncDefaultPreferences()
+                let files = urls.filter(\.isFileURL)
+                if !files.isEmpty { await library.importFiles(files) }
+                for url in urls where !url.isFileURL { await library.importArticle(from: url) }
+            }
+            return true
+        }
+        .onChange(of: library.lastFailures) { _, failures in
+            showingFailureAlert = !failures.isEmpty
+        }
         .toolbar {
             ToolbarItemGroup {
                 Button {
@@ -54,7 +72,6 @@ struct ContentView: View {
                     Label("Import", systemImage: "square.and.arrow.down")
                 }
                 .help("Import files")
-                .keyboardShortcut("o", modifiers: [.command])
 
                 Button {
                     showingURLImporter = true

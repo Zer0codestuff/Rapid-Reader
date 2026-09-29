@@ -64,6 +64,30 @@ cat >"$INFO_PLIST" <<PLIST
   <string>$MIN_SYSTEM_VERSION</string>
   <key>NSHighResolutionCapable</key>
   <true/>
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeName</key><string>Reading document</string>
+      <key>CFBundleTypeRole</key><string>Viewer</string>
+      <key>LSHandlerRank</key><string>Alternate</string>
+      <key>LSItemContentTypes</key>
+      <array>
+        <string>com.adobe.pdf</string><string>org.idpf.epub-container</string>
+        <string>org.openxmlformats.wordprocessingml.document</string>
+        <string>public.rtf</string><string>public.html</string><string>public.plain-text</string>
+        <string>net.daringfireball.markdown</string>
+      </array>
+      <key>CFBundleTypeExtensions</key>
+      <array><string>pdf</string><string>epub</string><string>docx</string><string>rtf</string><string>html</string><string>htm</string><string>xhtml</string><string>txt</string><string>text</string><string>md</string><string>markdown</string></array>
+    </dict>
+  </array>
+  <key>NSServices</key>
+  <array><dict>
+    <key>NSMenuItem</key><dict><key>default</key><string>Read in Rapid Reader</string></dict>
+    <key>NSMessage</key><string>readInRapidReader</string>
+    <key>NSPortName</key><string>Rapid Reader</string>
+    <key>NSSendTypes</key><array><string>public.utf8-plain-text</string><string>public.url</string></array>
+  </dict></array>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
 </dict>

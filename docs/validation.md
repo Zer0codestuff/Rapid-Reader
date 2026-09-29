@@ -47,3 +47,7 @@
 
 - `swift build` passed. Native screenshot checked with the adaptive controls; no overflow at the observed 1060-point window. The window minimum is reduced to 740x560; resizing through the automation tool did not change the window, so minimum-size QA remains pending.
 - Native URL sheet accepted typing without a field click. Notes exposes Done and an accessible New note editor.
+
+## macOS import integration
+
+- `swift build` and shell syntax checks pass. Finder document types and the text/URL Service are declared in the app bundle. End-to-end Finder and Services registration checks remain part of final bundle QA.
