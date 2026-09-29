@@ -9,13 +9,21 @@ on:
 jobs:
   test:
     name: SwiftPM Tests
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Select Xcode
+        # The redesign needs the macOS 26 SDK (Liquid Glass APIs).
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_2[6-9]*.app 2>/dev/null | sort -V | tail -1)
+          if [[ -n "$XCODE" ]]; then sudo xcode-select -s "$XCODE"; fi
+          xcodebuild -version
+          xcrun --show-sdk-version
 
       - name: Test
         run: swift test

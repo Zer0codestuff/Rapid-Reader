@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   package:
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
       - name: Checkout
@@ -32,6 +32,14 @@ jobs:
           else
             echo "value=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Select Xcode
+        # The redesign needs the macOS 26 SDK (Liquid Glass APIs).
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_2[6-9]*.app 2>/dev/null | sort -V | tail -1)
+          if [[ -n "$XCODE" ]]; then sudo xcode-select -s "$XCODE"; fi
+          xcodebuild -version
+          xcrun --show-sdk-version
 
       - name: Test
         run: swift test
