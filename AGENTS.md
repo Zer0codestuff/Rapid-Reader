@@ -14,7 +14,7 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 
 - Completed before this handoff: tolerant library decoding and backups, per-document content files, debounced metadata saves. Commits `b228b80` and `bff0b5f` are on the remote.
 - RSVP now uses `ReaderSession`, cached section tokens, absolute clock deadlines, and throttled progress reports. Playback stops when leaving a book. The inherited incomplete file is preserved in ignored `build/checkpoints/`.
-- PDFs use outline chapter titles where present, remove recurring short margins and numeric page labels, and join lowercase words broken across lines. This cleanup is heuristic; scanned PDFs still need OCR outside the app.
+- PDFs use outline chapter titles where present, remove recurring short margins and numeric page labels, and join lowercase words broken across lines. PDF outline tests use explicit PDF objects because PDFKit dropped the generated outline during fixture serialization. This cleanup is heuristic; scanned PDFs still need OCR outside the app.
 - EPUB chapters follow EPUB 3 nav or EPUB 2 NCX entries, including fragment boundaries in shared spine files. Nonlinear spine items and marked Gutenberg boilerplate are skipped.
 - HTML and article imports use SwiftSoup without AppKit HTML loading. Article selection prefers Wikipedia content, article/main elements, then prose density.
 - Library deletion is available from the context menu and Delete key, with confirmation. Content is removed only after the index saves successfully.

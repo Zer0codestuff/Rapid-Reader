@@ -9,7 +9,7 @@ public enum PDFTextExtractor {
         let pages = cleanedPages((0..<document.pageCount).map { document.page(at: $0)?.string ?? "" })
         var chapters: [(page: Int, title: String)] = []
         func visit(_ outline: PDFOutline) {
-            if let destination = outline.destination, let page = destination.page,
+            if let destination = outline.destination ?? (outline.action as? PDFActionGoTo)?.destination, let page = destination.page,
                let title = outline.label, !title.isEmpty {
                 let index = document.index(for: page)
                 if index != NSNotFound { chapters.append((index, title)) }

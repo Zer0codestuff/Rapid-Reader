@@ -33,4 +33,4 @@
 
 ## PDF import
 
-- Two PDF tests passed: repeated margins/dehyphenation and a generated two-page PDF with a real outline. Outline boundaries are at page granularity; pages containing multiple outline destinations remain one section.
+- The initial PDFKit-generated fixture lost its outline when saved. A corrected PDF fixture with explicit outline objects passes both tests. Checked: repeated margins/dehyphenation and a generated two-page PDF with a real outline. Outline boundaries are at page granularity; pages containing multiple outline destinations remain one section.

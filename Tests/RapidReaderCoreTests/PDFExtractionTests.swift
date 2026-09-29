@@ -13,31 +13,36 @@ final class PDFExtractionTests: XCTestCase {
 
     @MainActor
     func testPDFOutlineBecomesSections() throws {
-        let data = NSMutableData()
-        var box = CGRect(x: 0, y: 0, width: 400, height: 500)
-        let consumer = try XCTUnwrap(CGDataConsumer(data: data))
-        let context = try XCTUnwrap(CGContext(consumer: consumer, mediaBox: &box, nil))
-        for text in ["First chapter text.", "Second chapter text."] {
-            context.beginPDFPage(nil)
-            NSGraphicsContext.saveGraphicsState()
-            NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
-            (text as NSString).draw(at: CGPoint(x: 40, y: 400), withAttributes: [.font: NSFont.systemFont(ofSize: 18)])
-            NSGraphicsContext.restoreGraphicsState()
-            context.endPDFPage()
+        func stream(_ text: String) -> String {
+            let content = "BT /F1 18 Tf 40 400 Td (\(text)) Tj ET"
+            return "<< /Length \(content.utf8.count) >>\nstream\n\(content)\nendstream"
         }
-        context.closePDF()
-        let document = try XCTUnwrap(PDFDocument(data: data as Data))
-        let outline = PDFOutline()
-        for index in 0..<2 {
-            let child = PDFOutline()
-            child.label = "Chapter \(index + 1)"
-            child.destination = PDFDestination(page: try XCTUnwrap(document.page(at: index)), at: .zero)
-            outline.insertChild(child, at: index)
+        // A real PDF fixture with an explicit outline, independent of PDFKit's writer.
+        let objects = [
+            "<< /Type /Catalog /Pages 2 0 R /Outlines 8 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 500] /Resources << /Font << /F1 7 0 R >> >> /Contents 4 0 R >>",
+            stream("First chapter text."),
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 500] /Resources << /Font << /F1 7 0 R >> >> /Contents 6 0 R >>",
+            stream("Second chapter text."),
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+            "<< /Type /Outlines /First 9 0 R /Last 10 0 R /Count 2 >>",
+            "<< /Title (Chapter 1) /Parent 8 0 R /Dest [3 0 R /Fit] /Next 10 0 R >>",
+            "<< /Title (Chapter 2) /Parent 8 0 R /Dest [5 0 R /Fit] /Prev 9 0 R >>"
+        ]
+        var pdf = "%PDF-1.4\n"
+        var offsets: [Int] = []
+        for (index, object) in objects.enumerated() {
+            offsets.append(pdf.utf8.count)
+            pdf += "\(index + 1) 0 obj\n\(object)\nendobj\n"
         }
-        document.outlineRoot = outline
+        let xref = pdf.utf8.count
+        pdf += "xref\n0 11\n0000000000 65535 f \n"
+        for offset in offsets { pdf += String(format: "%010d 00000 n \n", offset) }
+        pdf += "trailer\n<< /Size 11 /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).pdf")
         defer { try? FileManager.default.removeItem(at: url) }
-        XCTAssertTrue(document.write(to: url))
+        try Data(pdf.utf8).write(to: url)
         let imported = try PDFTextExtractor.importPDF(at: url)
         XCTAssertEqual(imported.sections.map(\.title), ["Chapter 1", "Chapter 2"])
         XCTAssertTrue(imported.sections[1].text.contains("Second chapter"))
