@@ -110,6 +110,6 @@
 
 - Built on macOS 27 (Xcode 27) with the isolated library `/tmp/rr-qa2`; 41 tests pass. Screens checked natively through screenshots: library sidebar, RSVP stage, text mode, reading options popover, notes sheet (empty and with notes), statistics sheet, article import sheet, document search popover, and both Settings tabs. README screenshots were retaken from this build (dark appearance).
 - At 740x612 (the minimum window size) the header, stage, and control capsule all fit.
-- Liquid Glass is only exercised here on macOS 27. The macOS 14 to 25 material fallback compiles behind `#available` but was not run on those systems. Intel, VoiceOver, and light or sepia themes on the redesigned screens were not rechecked in this pass.
+- Liquid Glass is only exercised here on macOS 27. The macOS 14 to 25 material fallback compiles behind `#available` but was not run on those systems. The light theme was checked on the notes sheet and text reader only; Sepia, Intel, and VoiceOver were not rechecked in this pass.
 - The new icon was rendered through LaunchServices to check the Icon Composer output and the `.icns` fallback; the icon in the Dock and Finder was viewed on this Mac only.
 - A thin outline pill sometimes appeared at the bottom edge of screenshots taken while a popover was open; it did not reproduce otherwise and was not investigated further.
