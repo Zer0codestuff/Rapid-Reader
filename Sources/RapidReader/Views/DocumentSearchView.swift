@@ -15,7 +15,13 @@ struct DocumentSearchView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             TextField("Search in document", text: $query)
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.plain)
+                .padding(10)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.05)))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(fieldFocused ? Color.readerAmber.opacity(0.7) : Color.primary.opacity(0.08))
+                )
                 .focused($fieldFocused)
                 .onSubmit { if let first = matches.first { onSelect(first) } }
 
@@ -38,6 +44,7 @@ struct DocumentSearchView: View {
                 .buttonStyle(.plain)
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
         .padding(14)
         .frame(width: 420, height: 380)

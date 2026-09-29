@@ -19,8 +19,13 @@ struct StatisticsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack {
-                Text("Reading Statistics").font(.title3.weight(.semibold))
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Reading Statistics").font(.title2.weight(.semibold))
+                    Text("Time spent in RSVP playback.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
             }
@@ -34,7 +39,8 @@ struct StatisticsView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Minutes per day, last 14 days")
-                    .font(.headline)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
                 Chart {
                     ForEach(recent, id: \.date) { day in
                         BarMark(
@@ -102,14 +108,14 @@ private struct StatTile: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.title3.weight(.semibold))
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+        .padding(12)
+        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 

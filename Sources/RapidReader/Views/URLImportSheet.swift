@@ -9,13 +9,24 @@ struct URLImportSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("Article URL")
-                .font(.title3.weight(.semibold))
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Import an Article")
+                    .font(.title2.weight(.semibold))
+                Text("Paste a web address. Only the article text is kept.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
 
             TextField("https://example.com/article", text: $urlText)
-                .textFieldStyle(.roundedBorder)
-                .frame(width: 420)
+                .textFieldStyle(.plain)
+                .padding(12)
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.primary.opacity(0.05)))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(isFocused ? Color.readerAmber.opacity(0.7) : Color.primary.opacity(0.08))
+                )
                 .focused($isFocused)
+                .onSubmit(importURL)
 
             HStack {
                 Spacer()
@@ -25,12 +36,14 @@ struct URLImportSheet: View {
                 Button("Import") {
                     importURL()
                 }
-                .buttonStyle(.borderedProminent)
+                .readerGlassButton(prominent: true)
+                .tint(.readerAmber)
                 .disabled(parsedURL == nil)
                 .keyboardShortcut(.defaultAction)
             }
         }
         .padding(24)
+        .frame(width: 460)
         .onAppear { isFocused = true }
     }
 
