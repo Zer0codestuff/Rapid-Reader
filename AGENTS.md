@@ -8,7 +8,7 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 - `./script/build_and_run.sh --build-only` builds the app bundle; omit the flag to launch.
 - `./script/package_dmg.sh <version>` packages a universal (arm64 + x86_64) release DMG with version and build number in the plist. Optional `DEVELOPER_ID_APPLICATION` and `NOTARY_PROFILE` sign with the hardened runtime and notarize.
 - Use `RAPID_READER_LIBRARY_DIR` pointing to a temporary folder for runtime QA. Never test against the user's library. Launch with `open -n --env RAPID_READER_LIBRARY_DIR=... "dist/Rapid Reader.app"` so any instance started by `open` also uses it.
-- Work on `improvements`. The user authorized all fixes and product ideas from T3 thread `6bd0906d-c9c0-40ef-949f-0e1a24d5db09`, with a separate commit and push after each point. New ideas need approval. Do not merge or publish a release without instructions.
+- Work on `improvements` for product points and on `redesign` for the visual redesign. The user authorized all fixes and product ideas from T3 thread `6bd0906d-c9c0-40ef-949f-0e1a24d5db09`, with a separate commit and push after each point. New ideas need approval. Do not merge or publish a release without instructions.
 
 ## Status
 
@@ -33,6 +33,7 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 - Updates use Sparkle 2 (SwiftPM, embedded in Contents/Frameworks). `AppUpdater` starts only when Info.plist has `SUPublicEDKey` and `SUFeedURL`, written only when `SPARKLE_PUBLIC_KEY` is set. `make_appcast.sh` signs the appcast; `release.yml` uses `vars.SPARKLE_PUBLIC_KEY` and `secrets.SPARKLE_PRIVATE_KEY` when present. The owner must create the keys (see README).
 - Validation: 41 tests pass, including playback timing and session lifetime. On this Mac, 20 lookups of 28,000 words fell from 416 ms with repeated tokenization to 0.013 ms with cached tokens. This is a core benchmark, not whole-app CPU.
 - All authorized points from the source thread are implemented, except Italian localization, which the owner cancelled on 2026-09-29 (see Constraints). New ideas need approval.
+- Redesign (branch `redesign`): a "Quiet reader" UI. The RSVP stage has a theme background, amber glow, pivot letter on the focus line, and a floating glass control capsule that hides 2.2 s after playback starts and returns on mouse move; Up/Down change speed with a HUD. `Support/Glass.swift` gates `glassEffect` and `.glass` button styles on macOS 26 and falls back to `.regularMaterial`. Library, notes, statistics, article import, document search, and settings share the same rounded fields, amber focus rings, and glass buttons. The app icon is the "focus point" mark built from `Icon/AppIcon.icon` with `Icon/build_icon.sh` (actool compiles `Assets.car`; `AppIcon.icns` is the fallback). Nothing was changed in storage, preferences keys, or import formats.
 - Developer ID signing, notarization, and signed update publication require the owner's credentials. Implement and verify the local workflow first, then report any missing setup.
 
 ## Constraints

@@ -10,6 +10,7 @@ Rapid Reader is a native macOS app for focused long-form reading. It combines ra
 - Keep a local library with reading progress, favorite documents, notes, preferences, sections, and EPUB cover art.
 - Read in RSVP mode with pivot-letter highlighting, context preview, punctuation pauses, and adjustable chunk size.
 - Switch to full-text mode whenever you want to browse normally, then click a word to resume from that exact position.
+- Read on a quiet stage: a floating glass control bar (Liquid Glass on macOS 26 and later, a material fallback on macOS 14 and 15) that hides while you read and returns when the mouse moves. Arrow Up and Down change speed.
 - Tune speed, font size, focus mode, section navigation, and playback controls from one compact reading surface.
 - Recover gracefully from image-only EPUB cover pages and older library data.
 - Search inside a document, choose a light, dark, or sepia reader, and review reading time and speed in Statistics.
