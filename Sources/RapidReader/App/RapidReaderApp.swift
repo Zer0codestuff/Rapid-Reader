@@ -8,7 +8,7 @@ struct RapidReaderApp: App {
     var body: some Scene {
         WindowGroup("Rapid Reader") {
             ContentView()
-                .frame(minWidth: 1060, minHeight: 720)
+                .frame(minWidth: 740, minHeight: 560)
         }
         .windowStyle(.titleBar)
         .commands {

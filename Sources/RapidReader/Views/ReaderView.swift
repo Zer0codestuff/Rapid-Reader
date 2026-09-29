@@ -52,9 +52,9 @@ struct ReaderView: View {
 
             Divider()
 
-            VStack(spacing: 24) {
+            VStack(spacing: 14) {
                 if readerMode == .rsvp {
-                    Spacer(minLength: 20)
+                    Spacer(minLength: 4)
 
                     RSVPDisplay(words: session.displayWords, fontSize: session.preferences.fontSize)
                         .accessibilityIdentifier("rsvp-word-display")
@@ -64,7 +64,7 @@ struct ReaderView: View {
                             .transition(.opacity)
                     }
 
-                    Spacer(minLength: 18)
+                    Spacer(minLength: 4)
                 } else {
                     FullTextReaderView(
                         sections: item.sections,
@@ -94,8 +94,8 @@ struct ReaderView: View {
                     onForward: session.forward
                 )
             }
-            .padding(.horizontal, session.preferences.focusMode ? 56 : 34)
-            .padding(.bottom, 26)
+            .padding(.horizontal, session.preferences.focusMode ? 24 : 16)
+            .padding(.bottom, 16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(readerBackground)
@@ -374,7 +374,7 @@ private struct ReaderControls: View {
                     .accessibilityIdentifier("progress-slider")
                     .disabled(maxWordIndex <= 0)
 
-                HStack(spacing: 18) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 14)], alignment: .leading, spacing: 12) {
                     ControlCluster(title: "Speed") {
                         Stepper("\(preferences.wordsPerMinute) WPM", value: $preferences.wordsPerMinute, in: 100...900, step: 25)
                             .frame(width: 132)
@@ -395,22 +395,18 @@ private struct ReaderControls: View {
                         .frame(width: 128)
                     }
 
-                    ControlCluster(title: "Mode") {
-                        HStack(spacing: 12) {
-                            Toggle("Context", isOn: $preferences.showContext)
-                                .help("Context")
-                            Toggle("Pauses", isOn: $preferences.pauseOnPunctuation)
-                                .help("Punctuation pauses")
-                            Toggle("Focus", isOn: $preferences.focusMode)
-                                .help("Focus")
-                        }
-                        .fixedSize()
-                    }
                 }
+                HStack(spacing: 16) {
+                    Toggle("Context", isOn: $preferences.showContext)
+                    Toggle("Pauses", isOn: $preferences.pauseOnPunctuation)
+                        .help("Punctuation pauses")
+                    Toggle("Focus", isOn: $preferences.focusMode)
+                }
+
                 .font(.callout)
             }
         }
-        .padding(18)
+        .padding(12)
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 

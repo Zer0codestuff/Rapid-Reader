@@ -5,8 +5,6 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @StateObject private var library = LibraryStore()
-    @AppStorage("readerDefaultWPM") private var defaultWPM = 350
-    @AppStorage("readerDefaultFontSize") private var defaultFontSize = 72.0
     @State private var searchText = ""
     @State private var showingFileImporter = false
     @State private var showingURLImporter = false
@@ -119,11 +117,6 @@ struct ContentView: View {
     }
 
     private func syncDefaultPreferences() {
-        library.setDefaultPreferences(
-            ReadingPreferences(
-                wordsPerMinute: defaultWPM,
-                fontSize: defaultFontSize
-            )
-        )
+        library.setDefaultPreferences(ReadingDefaults.preferences())
     }
 }

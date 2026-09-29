@@ -42,3 +42,8 @@
 ## Notes and small UI fixes
 
 - Notes persistence test passed for editing, position retention, reload, and deletion. App build passed with URL focus, a submission guard, and a visible Done action. Native runtime checks continue after the layout/defaults changes.
+
+## Defaults and layout
+
+- `swift build` passed. Native screenshot checked with the adaptive controls; no overflow at the observed 1060-point window. The window minimum is reduced to 740x560; resizing through the automation tool did not change the window, so minimum-size QA remains pending.
+- Native URL sheet accepted typing without a field click. Notes exposes Done and an accessible New note editor.
