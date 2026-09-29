@@ -14,8 +14,9 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 
 - Completed before this handoff: tolerant library decoding and backups, per-document content files, debounced metadata saves. Commits `b228b80` and `bff0b5f` are on the remote.
 - RSVP now uses `ReaderSession`, cached section tokens, absolute clock deadlines, and throttled progress reports. Playback stops when leaving a book. The inherited incomplete file is preserved in ignored `build/checkpoints/`.
-- Validation: 20 tests pass, including playback timing and session lifetime. On this Mac, 20 lookups of 28,000 words fell from 416 ms with repeated tokenization to 0.013 ms with cached tokens. This is a core benchmark, not whole-app CPU.
-- Remaining authorized work: shared token ranges; keyboard focus and deletion; EPUB navigation; article and PDF extraction; duplicate imports and clipboard titles; notes and accessibility; file/menu/Services integration; consistent defaults and compact layout; Italian localization; release/universal packaging and CI; update support; remaining-time estimates, optional pacing and rewind, reading statistics, text search, and themes.
+- RSVP and text mode share normalized UTF-16 token ranges; text mode caches its document and updates only the current highlight.
+- Validation: 21 tests pass, including playback timing and session lifetime. On this Mac, 20 lookups of 28,000 words fell from 416 ms with repeated tokenization to 0.013 ms with cached tokens. This is a core benchmark, not whole-app CPU.
+- Remaining authorized work: keyboard focus and deletion; EPUB navigation; article and PDF extraction; duplicate imports and clipboard titles; notes and accessibility; file/menu/Services integration; consistent defaults and compact layout; Italian localization; release/universal packaging and CI; update support; remaining-time estimates, optional pacing and rewind, reading statistics, text search, and themes.
 - Developer ID signing, notarization, and signed update publication require the owner's credentials. Implement and verify the local workflow first, then report any missing setup.
 
 ## Constraints

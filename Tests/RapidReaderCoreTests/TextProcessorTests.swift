@@ -19,6 +19,18 @@ final class TextProcessorTests: XCTestCase {
         XCTAssertEqual(sections[0].wordCount, 3)
     }
 
+    func testTokenRangesMatchRSVPWithUnicodeAndSeparators() {
+        let input = "Alpha \u{2014} *** … café 👩🏽‍💻 東京\u{00a0}beta\u{200b}gamma"
+        let tokenized = TextProcessor.tokenizedText(input)
+        XCTAssertEqual(tokenized.tokens.map(\.text), TextProcessor.tokenize(input))
+        XCTAssertEqual(tokenized.tokens.map(\.text), ["Alpha", "café", "東京", "beta", "gamma"])
+        let source = tokenized.text as NSString
+        for token in tokenized.tokens {
+            XCTAssertEqual(source.substring(with: token.range), token.text)
+        }
+        XCTAssertEqual(RSVPWord("Hello!\"").punctuationDelayMultiplier, 1.8)
+    }
+
     func testRSVPPivot() {
         let word = RSVPWord("reading")
         let split = word.splitForDisplay

@@ -8,6 +8,13 @@ struct FullTextReaderView: NSViewRepresentable {
     let currentWordIndex: Int
     let onSelectWord: (Int, Int) -> Void
 
+    final class Coordinator {
+        var sections: [BookSection] = []
+        var selectedRange: NSRange?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
         scrollView.hasVerticalScroller = true
@@ -38,17 +45,25 @@ struct FullTextReaderView: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? ClickableDocumentTextView else { return }
 
-        let document = TextDocumentBuilder.makeDocument(
-            sections: sections,
-            currentSectionIndex: currentSectionIndex,
-            currentWordIndex: currentWordIndex
-        )
-
+        let coordinator = context.coordinator
         textView.onSelectWord = onSelectWord
-        textView.wordRanges = document.wordRanges
-        textView.textStorage?.setAttributedString(document.attributedText)
-
-        if let selectedRange = document.selectedRange {
+        if coordinator.sections != sections {
+            let document = TextDocumentBuilder.makeDocument(sections: sections)
+            textView.wordRanges = document.wordRanges
+            textView.textStorage?.setAttributedString(document.attributedText)
+            coordinator.sections = sections
+            coordinator.selectedRange = nil
+        }
+        let sectionRanges = textView.wordRanges.filter { $0.sectionIndex == currentSectionIndex }
+        let index = min(max(currentWordIndex, 0), max(sectionRanges.count - 1, 0))
+        let selectedRange = sectionRanges.indices.contains(index) ? sectionRanges[index].range : nil
+        guard selectedRange != coordinator.selectedRange else { return }
+        if let old = coordinator.selectedRange {
+            textView.textStorage?.removeAttribute(.backgroundColor, range: old)
+        }
+        coordinator.selectedRange = selectedRange
+        if let selectedRange {
+            textView.textStorage?.addAttribute(.backgroundColor, value: NSColor.systemOrange.withAlphaComponent(0.26), range: selectedRange)
             textView.scrollRangeToVisible(selectedRange)
         }
     }
@@ -63,19 +78,14 @@ private struct TextWordRange {
 private struct BuiltTextDocument {
     var attributedText: NSAttributedString
     var wordRanges: [TextWordRange]
-    var selectedRange: NSRange?
 }
 
 private enum TextDocumentBuilder {
     static func makeDocument(
-        sections: [BookSection],
-        currentSectionIndex: Int,
-        currentWordIndex: Int
+        sections: [BookSection]
     ) -> BuiltTextDocument {
         let output = NSMutableAttributedString()
         var wordRanges: [TextWordRange] = []
-        var selectedRange: NSRange?
-
         let bodyStyle = NSMutableParagraphStyle()
         bodyStyle.lineSpacing = 4
         bodyStyle.paragraphSpacing = 12
@@ -93,11 +103,6 @@ private enum TextDocumentBuilder {
             .foregroundColor: NSColor.labelColor,
             .paragraphStyle: headingStyle
         ]
-        let selectedAttributes: [NSAttributedString.Key: Any] = [
-            .backgroundColor: NSColor.systemOrange.withAlphaComponent(0.26),
-            .foregroundColor: NSColor.labelColor
-        ]
-
         for (sectionIndex, section) in sections.enumerated() {
             if sectionIndex > 0 {
                 output.append(NSAttributedString(string: "\n\n"))
@@ -105,17 +110,12 @@ private enum TextDocumentBuilder {
 
             output.append(NSAttributedString(string: "\(section.title)\n", attributes: headingAttributes))
 
-            let sectionText = TextProcessor.normalizedText(section.text)
+            let tokenized = TextProcessor.tokenizedText(section.text)
+            let sectionText = tokenized.text
             let bodyStart = output.length
             output.append(NSAttributedString(string: sectionText, attributes: bodyAttributes))
 
-            let ranges = wordRangesIn(sectionText)
-            let highlightedWordIndex = highlightedIndex(
-                for: section,
-                sectionIndex: sectionIndex,
-                currentSectionIndex: currentSectionIndex,
-                currentWordIndex: currentWordIndex
-            )
+            let ranges = tokenized.tokens.map(\.range)
 
             for (wordIndex, range) in ranges.enumerated() {
                 let absoluteRange = NSRange(location: bodyStart + range.location, length: range.length)
@@ -127,38 +127,17 @@ private enum TextDocumentBuilder {
                     )
                 )
 
-                if wordIndex == highlightedWordIndex, sectionIndex == currentSectionIndex {
-                    output.addAttributes(selectedAttributes, range: absoluteRange)
-                    selectedRange = absoluteRange
-                }
+
             }
         }
 
         return BuiltTextDocument(
             attributedText: output,
-            wordRanges: wordRanges,
-            selectedRange: selectedRange
+            wordRanges: wordRanges
         )
     }
 
-    private static func wordRangesIn(_ text: String) -> [NSRange] {
-        guard let regex = try? NSRegularExpression(pattern: #"\S+"#) else {
-            return []
-        }
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        return regex.matches(in: text, range: range).map(\.range)
-    }
 
-    private static func highlightedIndex(
-        for section: BookSection,
-        sectionIndex: Int,
-        currentSectionIndex: Int,
-        currentWordIndex: Int
-    ) -> Int? {
-        guard sectionIndex == currentSectionIndex else { return nil }
-        let maxIndex = max(TextProcessor.tokenize(section.text).count - 1, 0)
-        return min(max(currentWordIndex, 0), maxIndex)
-    }
 }
 
 private final class ClickableDocumentTextView: NSTextView {

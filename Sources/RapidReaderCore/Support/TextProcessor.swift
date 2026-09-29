@@ -17,11 +17,19 @@ public enum TextProcessor {
     }
 
     public static func tokenize(_ text: String) -> [String] {
+        tokenizedText(text).tokens.map(\.text)
+    }
+
+    /// Ranges use UTF-16 offsets in the returned normalized text, as required by AppKit.
+    public static func tokenizedText(_ text: String) -> TokenizedText {
         let normalized = normalizedText(text)
-        return normalized
-            .components(separatedBy: .whitespacesAndNewlines)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty && containsReadableScalar($0) }
+        let source = normalized as NSString
+        let regex = try! NSRegularExpression(pattern: #"\S+"#)
+        let tokens = regex.matches(in: normalized, range: NSRange(location: 0, length: source.length)).compactMap { match -> TextToken? in
+            let word = source.substring(with: match.range)
+            return containsReadableScalar(word) ? TextToken(text: word, range: match.range) : nil
+        }
+        return TokenizedText(text: normalized, tokens: tokens)
     }
 
     public static func sections(from text: String, fallbackTitle: String) -> [BookSection] {
@@ -138,12 +146,23 @@ public struct RSVPWord: Equatable, Sendable {
     }
 
     public var punctuationDelayMultiplier: Double {
-        if raw.hasSuffix(".") || raw.hasSuffix("!") || raw.hasSuffix("?") {
+        let ending = raw.trimmingCharacters(in: CharacterSet(charactersIn: "\"'”’)]}"))
+        if ending.hasSuffix(".") || ending.hasSuffix("!") || ending.hasSuffix("?") {
             return 1.8
         }
-        if raw.hasSuffix(",") || raw.hasSuffix(";") || raw.hasSuffix(":") {
+        if ending.hasSuffix(",") || ending.hasSuffix(";") || ending.hasSuffix(":") {
             return 1.35
         }
         return 1
     }
+}
+
+public struct TextToken: Equatable, Sendable {
+    public let text: String
+    public let range: NSRange
+}
+
+public struct TokenizedText: Equatable, Sendable {
+    public let text: String
+    public let tokens: [TextToken]
 }
