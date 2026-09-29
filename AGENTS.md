@@ -26,8 +26,15 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 - Library deletion is available from the context menu and Delete key, with confirmation. Content is removed only after the index saves successfully.
 - Reader arrow/space shortcuts are scoped to the active reader window and excluded from text fields, controls, and sheets. Native search-field cursor behavior was checked.
 - RSVP and text mode share normalized UTF-16 token ranges; text mode caches its document and updates only the current highlight.
+- Optional pacing, off by default and per document: warm-up from half speed over 0 to 10 s, longer display for words over 8 characters (up to +60%), and rewind of 0 to 20 words when resuming after a playback pause. Seeking clears the pending rewind.
+- The app has a single library `Window` and stays running when it closes; Finder opens, Services, and Dock reopen show that window instead of creating a second reader session.
+- Search in document (Cmd+F popover in the reader header) is case- and diacritic-insensitive, builds its index off the main thread, shows up to 500 matches with context, and jumps in the shared token space.
+- Reader themes: System, Light, Dark, Sepia. One app-wide `readerTheme` setting (reading options popover and Settings) applies to the RSVP and text reader; the sidebar follows macOS. Amber stays the accent.
+- Reading statistics: `ReaderSession` reports `(words, seconds)` per playback run; words count after their display time ends. `LibraryStore` keeps per-day totals in `statistics.json` (unreadable files move to Backups). The toolbar Statistics sheet shows today, last 7 days, average WPM including punctuation pauses, words read, and a 14-day chart. Bar colors validated with the dataviz script: #C2700F light, #CC7A18 dark.
+- Packaging: `package_dmg.sh` builds a universal release DMG with version and build number in Info.plist; optional `DEVELOPER_ID_APPLICATION` and `NOTARY_PROFILE` sign (Sparkle parts first) and notarize. `ci.yml` tests and packages on main and PRs; `release.yml` runs on `v*` tags and creates a draft release. Neither workflow has run remotely from this branch.
+- Updates use Sparkle 2 (SwiftPM, embedded in Contents/Frameworks). `AppUpdater` starts only when Info.plist has `SUPublicEDKey` and `SUFeedURL`, written only when `SPARKLE_PUBLIC_KEY` is set. `make_appcast.sh` signs the appcast; `release.yml` uses `vars.SPARKLE_PUBLIC_KEY` and `secrets.SPARKLE_PRIVATE_KEY` when present. The owner must create the keys (see README).
 - Validation: 41 tests pass, including playback timing and session lifetime. On this Mac, 20 lookups of 28,000 words fell from 416 ms with repeated tokenization to 0.013 ms with cached tokens. This is a core benchmark, not whole-app CPU.
-- Remaining authorized work: Italian localization; update support.
+- Remaining authorized work: Italian localization.
 - Developer ID signing, notarization, and signed update publication require the owner's credentials. Implement and verify the local workflow first, then report any missing setup.
 
 ## Constraints

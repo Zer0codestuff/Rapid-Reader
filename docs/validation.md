@@ -89,3 +89,10 @@
 - Fixed resource packaging: SwiftPM resources had been copied to `Contents/Resources/Contents/Resources`, so the empty-library artwork was missing. The release build now shows it (checked with an isolated empty library).
 - Only the arm64 slice was run. The x86_64 slice was built but not launched on an Intel Mac or under Rosetta.
 - Workflow YAML parses. The workflows have not run on GitHub from this branch; tags and releases were not created. Developer ID signing and notarization paths are implemented but untested because no credentials were used.
+
+## Updates
+
+- Built with a throwaway EdDSA key kept in a file under /tmp (the keychain was not used). Old build 1.0.1 (build 100) was copied to a temporary folder; the new DMG 1.0.2 (build 101) and a signed appcast were served from 127.0.0.1.
+- Checked in the native app: Check for Updates offered 1.0.2, Install Update downloaded the DMG, and Install and Relaunch replaced the app in place. The relaunched process reported 1.0.2 (build 101). `launchctl setenv` kept the relaunch on the isolated library; the variable, Sparkle defaults, and Sparkle cache were removed afterwards.
+- Without `SPARKLE_PUBLIC_KEY`, Info.plist has no update keys and neither the menu item nor the Settings section appears. With a key, Settings shows automatic checks and Check Now.
+- Not tested: updates between Developer ID signed builds, the notarized path, the GitHub-hosted feed, and the release workflow's appcast step.
