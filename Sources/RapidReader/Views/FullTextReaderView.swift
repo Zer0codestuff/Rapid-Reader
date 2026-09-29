@@ -8,6 +8,7 @@ struct FullTextReaderView: NSViewRepresentable {
     let currentWordIndex: Int
     let textColor: NSColor
     let appearance: NSAppearance?
+    var bottomInset: CGFloat = 0
     let onSelectWord: (Int, Int) -> Void
 
     final class Coordinator {
@@ -24,12 +25,13 @@ struct FullTextReaderView: NSViewRepresentable {
         scrollView.drawsBackground = false
         scrollView.borderType = .noBorder
         scrollView.autohidesScrollers = true
+        scrollView.automaticallyAdjustsContentInsets = false
 
         let textView = ClickableDocumentTextView()
         textView.isEditable = false
         textView.isSelectable = true
         textView.drawsBackground = false
-        textView.textContainerInset = NSSize(width: 28, height: 24)
+        textView.textContainerInset = NSSize(width: 28, height: 36)
         textView.minSize = NSSize(width: 0, height: 0)
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.isVerticallyResizable = true
@@ -51,6 +53,7 @@ struct FullTextReaderView: NSViewRepresentable {
         let coordinator = context.coordinator
         textView.onSelectWord = onSelectWord
         scrollView.appearance = appearance
+        scrollView.contentInsets = NSEdgeInsets(top: 0, left: 0, bottom: bottomInset, right: 0)
         if coordinator.sections != sections || coordinator.textColor != textColor {
             let document = TextDocumentBuilder.makeDocument(sections: sections, textColor: textColor)
             textView.wordRanges = document.wordRanges
@@ -68,7 +71,7 @@ struct FullTextReaderView: NSViewRepresentable {
         }
         coordinator.selectedRange = selectedRange
         if let selectedRange {
-            textView.textStorage?.addAttribute(.backgroundColor, value: NSColor.systemOrange.withAlphaComponent(0.26), range: selectedRange)
+            textView.textStorage?.addAttribute(.backgroundColor, value: NSColor(srgbRed: 0.95, green: 0.62, blue: 0.22, alpha: 0.30), range: selectedRange)
             textView.scrollRangeToVisible(selectedRange)
         }
     }
@@ -93,19 +96,20 @@ private enum TextDocumentBuilder {
         let output = NSMutableAttributedString()
         var wordRanges: [TextWordRange] = []
         let bodyStyle = NSMutableParagraphStyle()
-        bodyStyle.lineSpacing = 4
+        bodyStyle.lineHeightMultiple = 1.12
         bodyStyle.paragraphSpacing = 12
 
         let headingStyle = NSMutableParagraphStyle()
-        headingStyle.paragraphSpacing = 10
+        headingStyle.paragraphSpacing = 14
+        headingStyle.paragraphSpacingBefore = 18
 
         let bodyAttributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 18, weight: .regular),
+            .font: readingFont(size: 18, weight: .regular),
             .foregroundColor: textColor,
             .paragraphStyle: bodyStyle
         ]
         let headingAttributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 22, weight: .semibold),
+            .font: readingFont(size: 26, weight: .semibold),
             .foregroundColor: textColor,
             .paragraphStyle: headingStyle
         ]
@@ -146,9 +150,26 @@ private enum TextDocumentBuilder {
 
 }
 
+private func readingFont(size: CGFloat, weight: NSFont.Weight) -> NSFont {
+    let base = NSFont.systemFont(ofSize: size, weight: weight)
+    guard let serif = base.fontDescriptor.withDesign(.serif) else { return base }
+    return NSFont(descriptor: serif, size: size) ?? base
+}
+
 private final class ClickableDocumentTextView: NSTextView {
     var wordRanges: [TextWordRange] = []
     var onSelectWord: ((Int, Int) -> Void)?
+
+    /// Keeps lines at a comfortable reading length by centering a column in wide windows.
+    private let columnWidth: CGFloat = 680
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        let horizontal = max(28, (newSize.width - columnWidth) / 2)
+        if abs(textContainerInset.width - horizontal) > 0.5 {
+            textContainerInset = NSSize(width: horizontal, height: textContainerInset.height)
+        }
+    }
 
     override func mouseDown(with event: NSEvent) {
         defer {

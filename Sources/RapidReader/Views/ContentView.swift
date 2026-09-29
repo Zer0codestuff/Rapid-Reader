@@ -10,6 +10,8 @@ struct ContentView: View {
     @State private var showingURLImporter = false
     @State private var showingFailureAlert = false
     @State private var showingStatistics = false
+    @State private var isDropTargeted = false
+    @AppStorage(ReaderTheme.storageKey) private var theme: ReaderTheme = .system
 
     private var visibleItems: [RapidReaderCore.LibraryItem] {
         let sorted = library.items.sortedForLibrary
@@ -32,7 +34,12 @@ struct ContentView: View {
                 onImportFiles: { showingFileImporter = true },
                 onImportURL: { showingURLImporter = true },
                 onPasteText: importClipboard,
-                onDelete: { offsets in library.deleteItems(at: offsets, from: visibleItems) },
+                onShowStatistics: { showingStatistics = true },
+                onDelete: { id in
+                    if let index = visibleItems.firstIndex(where: { $0.id == id }) {
+                        library.deleteItems(at: IndexSet(integer: index), from: visibleItems)
+                    }
+                },
                 onToggleFavorite: library.toggleFavorite
             )
         } detail: {
@@ -42,11 +49,20 @@ struct ContentView: View {
             } else {
                 EmptyLibraryView(
                     onImportFiles: { showingFileImporter = true },
+                    onImportURL: { showingURLImporter = true },
                     onPasteText: importClipboard
                 )
             }
         }
-        .navigationTitle("Rapid Reader")
+        .overlay {
+            if isDropTargeted {
+                DropHint()
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: isDropTargeted)
+        // The whole window follows an explicit reader theme, so the chrome matches the page.
+        .preferredColorScheme(theme.colorScheme)
         .focusedSceneValue(\.importActions, ImportActions(
             files: { showingFileImporter = true },
             article: { showingURLImporter = true },
@@ -61,33 +77,11 @@ struct ContentView: View {
                 for url in urls where !url.isFileURL { await library.importArticle(from: url) }
             }
             return true
+        } isTargeted: { targeted in
+            isDropTargeted = targeted
         }
         .onChange(of: library.lastFailures) { _, failures in
             showingFailureAlert = !failures.isEmpty
-        }
-        .toolbar {
-            ToolbarItemGroup {
-                Button {
-                    showingStatistics = true
-                } label: {
-                    Label("Statistics", systemImage: "chart.bar.xaxis")
-                }
-                .help("Reading statistics")
-
-                Button {
-                    showingFileImporter = true
-                } label: {
-                    Label("Import", systemImage: "square.and.arrow.down")
-                }
-                .help("Import files")
-
-                Button {
-                    showingURLImporter = true
-                } label: {
-                    Label("Article", systemImage: "link")
-                }
-                .help("Import article URL")
-            }
         }
         .fileImporter(
             isPresented: $showingFileImporter,
@@ -146,5 +140,21 @@ struct ContentView: View {
 
     private func syncDefaultPreferences() {
         library.setDefaultPreferences(ReadingDefaults.preferences())
+    }
+}
+
+private struct DropHint: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(Color.readerAmber, style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
+                .padding(10)
+            Label("Drop to add to your library", systemImage: "arrow.down.doc")
+                .font(.headline)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .readerGlass(in: Capsule())
+        }
+        .allowsHitTesting(false)
     }
 }
