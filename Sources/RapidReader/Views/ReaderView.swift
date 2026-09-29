@@ -10,13 +10,6 @@ struct ReaderView: View {
         case text = "Text"
 
         var id: String { rawValue }
-
-        var title: LocalizedStringKey {
-            switch self {
-            case .rsvp: "RSVP"
-            case .text: "Text"
-            }
-        }
     }
 
     @StateObject private var session: ReaderSession
@@ -244,7 +237,7 @@ private struct ReaderHeader<Search: View>: View {
 
             Picker("Mode", selection: $readerMode) {
                 ForEach(ReaderView.ReaderMode.allCases) { mode in
-                    Text(mode.title).tag(mode)
+                    Text(mode.rawValue).tag(mode)
                 }
             }
             .pickerStyle(.segmented)
@@ -263,8 +256,8 @@ private struct ReaderHeader<Search: View>: View {
             Button(action: onToggleFavorite) {
                 Image(systemName: item.isFavorite ? "star.fill" : "star")
             }
-            .help(item.isFavorite ? LocalizedStringKey("Unfavorite") : LocalizedStringKey("Favorite"))
-            .accessibilityLabel(item.isFavorite ? LocalizedStringKey("Unfavorite") : LocalizedStringKey("Favorite"))
+            .help(item.isFavorite ? "Unfavorite" : "Favorite")
+            .accessibilityLabel(item.isFavorite ? "Unfavorite" : "Favorite")
 
             Button(action: onShowNotes) {
                 Label("Notes", systemImage: "note.text")
@@ -403,8 +396,8 @@ private struct ReaderControls: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .help(isPlaying ? LocalizedStringKey("Pause") : LocalizedStringKey("Play"))
-                .accessibilityLabel(isPlaying ? LocalizedStringKey("Pause") : LocalizedStringKey("Play"))
+                .help(isPlaying ? "Pause" : "Play")
+                .accessibilityLabel(isPlaying ? "Pause" : "Play")
 
                 Button(action: onForward) {
                     Image(systemName: "forward.fill")
@@ -483,7 +476,7 @@ private struct ReaderControls: View {
 }
 
 private struct ControlCluster<Content: View>: View {
-    let title: LocalizedStringKey
+    let title: String
     @ViewBuilder var content: Content
 
     var body: some View {

@@ -13,7 +13,6 @@ Rapid Reader is a native macOS app for focused long-form reading. It combines ra
 - Tune speed, font size, focus mode, section navigation, and playback controls from one compact reading surface.
 - Recover gracefully from image-only EPUB cover pages and older library data.
 - Search inside a document, choose a light, dark, or sepia reader, and review reading time and speed in Statistics.
-- Available in English and Italian.
 - Store everything locally in `~/Library/Application Support/Rapid Reader`.
 
 ![Rapid Reader full-text mode](docs/screenshots/rapid-reader-text.png)

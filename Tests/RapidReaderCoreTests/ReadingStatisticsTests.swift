@@ -45,7 +45,7 @@ final class ReadingStatisticsTests: XCTestCase {
         try Data("not json".utf8).write(to: url)
         let reloaded = LibraryStore(rootURL: root)
         XCTAssertEqual(reloaded.statistics.total.words, 0)
-        XCTAssertEqual(reloaded.lastFailures.count, 1)
+        XCTAssertEqual(reloaded.lastFailures.map(\.sourceName), ["Statistics"])
         let backups = try FileManager.default.contentsOfDirectory(atPath: root.appendingPathComponent("Backups").path)
         XCTAssertTrue(backups.contains { $0.hasPrefix("statistics-unreadable") })
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))

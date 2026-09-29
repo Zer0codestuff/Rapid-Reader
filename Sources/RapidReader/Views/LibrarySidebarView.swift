@@ -21,7 +21,7 @@ struct LibrarySidebarView: View {
                         LibraryRow(item: item)
                             .tag(item.id)
                             .contextMenu {
-                                Button(item.isFavorite ? LocalizedStringKey("Unfavorite") : LocalizedStringKey("Favorite")) {
+                                Button(item.isFavorite ? "Unfavorite" : "Favorite") {
                                     onToggleFavorite(item.id)
                                 }
                                 Button("Delete", role: .destructive) { pendingDeletion = item.id }

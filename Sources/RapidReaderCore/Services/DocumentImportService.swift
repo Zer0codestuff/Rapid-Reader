@@ -12,13 +12,13 @@ public enum DocumentImportError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .unsupportedFormat(let name):
-            String(localized: "Unsupported format: \(name)", bundle: .module)
+            "Unsupported format: \(name)"
         case .unreadableFile(let name):
-            String(localized: "Could not read \(name).", bundle: .module)
+            "Could not read \(name)."
         case .emptyDocument(let name):
-            String(localized: "\(name) does not contain readable text.", bundle: .module)
+            "\(name) does not contain readable text."
         case .invalidURL(let value):
-            String(localized: "\(value) is not a valid URL.", bundle: .module)
+            "\(value) is not a valid URL."
         case .networkFailure(let message):
             message
         }
@@ -76,9 +76,9 @@ public final class DocumentImportService: Sendable {
     public func importClipboardText(_ text: String) throws -> ImportedDocument {
         let normalized = TextProcessor.normalizedText(text)
         guard !TextProcessor.tokenize(normalized).isEmpty else {
-            throw DocumentImportError.emptyDocument(String(localized: "Clipboard", bundle: .module))
+            throw DocumentImportError.emptyDocument("Clipboard")
         }
-        let firstLine = normalized.components(separatedBy: .newlines).first ?? String(localized: "Clipboard Text", bundle: .module)
+        let firstLine = normalized.components(separatedBy: .newlines).first ?? "Clipboard Text"
         let title = String(firstLine.replacingOccurrences(of: #"^#{1,6}\s*"#, with: "", options: .regularExpression).prefix(80))
         return ImportedDocument(
             title: title,
@@ -100,13 +100,13 @@ public final class DocumentImportService: Sendable {
         }
 
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw DocumentImportError.networkFailure(String(localized: "The server returned HTTP \(http.statusCode).", bundle: .module))
+            throw DocumentImportError.networkFailure("The server returned HTTP \(http.statusCode).")
         }
 
         let html = HTMLTextExtractor.decode(data)
         let title = TextProcessor.cleanedTitle(
             HTMLTextExtractor.title(fromHTML: html),
-            fallback: url.host(percentEncoded: false) ?? String(localized: "Web Article", bundle: .module)
+            fallback: url.host(percentEncoded: false) ?? "Web Article"
         )
         let body = HTMLTextExtractor.articleText(html)
         guard !body.isEmpty else {

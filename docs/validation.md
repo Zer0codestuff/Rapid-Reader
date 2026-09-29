@@ -97,9 +97,6 @@
 - Without `SPARKLE_PUBLIC_KEY`, Info.plist has no update keys and neither the menu item nor the Settings section appears. With a key, Settings shows automatic checks and Check Now.
 - Not tested: updates between Developer ID signed builds, the notarized path, the GitHub-hosted feed, and the release workflow's appcast step.
 
-## Italian localization
+## English only
 
-- `swift test`: 42 tests passed, including a check that the core bundle ships Italian messages.
-- Keys were extracted with the compiler (`-emit-localized-strings`): 99 UI keys and 22 core keys, all covered; the catalog generator fails on missing or extra keys. Ternary labels that SwiftUI treated as plain strings (Play/Pause, Favorite/Unfavorite) and the RSVP/Text picker now use `LocalizedStringKey`.
-- Native app launched with `-AppleLanguages (it)` and an isolated library: sidebar, reader controls, menus (including system items), search and reading options popovers, statistics (Italian dates and plurals), and an import error from the core were Italian. A normal launch on this Mac (English first) stayed English. The universal release DMG was rebuilt and launched in Italian; `codesign --verify --deep --strict` passed.
-- Section titles generated before this change (for example "Part 1") are stored document data and stay as imported.
+- An Italian localization was built and checked, then removed at the owner's request: the project and the app stay entirely in English. The revert restores the previous English-only strings and build script; no `.lproj` or String Catalog ships.

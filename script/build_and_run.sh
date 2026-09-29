@@ -72,17 +72,6 @@ if [[ -n "$RESOURCE_DIR" ]] && compgen -G "$RESOURCE_DIR/*" >/dev/null; then
   cp -R "$RESOURCE_DIR/"* "$APP_RESOURCES/"
 fi
 
-# Library targets load resources through Bundle.module, which looks in Contents/Resources
-# and stops the app if the bundle is missing.
-for bundle in RapidReader_RapidReaderCore ZIPFoundation_ZIPFoundation; do
-  if [[ -d "$BUILD_DIR/$bundle.bundle" ]]; then
-    ditto "$BUILD_DIR/$bundle.bundle" "$APP_RESOURCES/$bundle.bundle"
-  elif [[ "$bundle" == RapidReader_RapidReaderCore ]]; then
-    echo "Missing $bundle.bundle in $BUILD_DIR" >&2
-    exit 1
-  fi
-done
-
 if [[ -f "$ROOT_DIR/Sources/RapidReader/Resources/AppIcon.icns" ]]; then
   cp "$ROOT_DIR/Sources/RapidReader/Resources/AppIcon.icns" "$APP_RESOURCES/AppIcon.icns"
 fi
@@ -110,8 +99,6 @@ cat >"$INFO_PLIST" <<PLIST
   <string>$BUILD_NUMBER</string>
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
-  <key>CFBundleLocalizations</key>
-  <array><string>en</string><string>it</string></array>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.productivity</string>
   <key>LSMinimumSystemVersion</key>
