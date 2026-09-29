@@ -1,0 +1,27 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "srgb:0.20000,0.19500,0.19000,1.00000",
+      "srgb:0.07000,0.06800,0.06500,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "layers" : [
+        { "image-name" : "guides.png", "name" : "guides", "glass" : true },
+        { "image-name" : "pivot.png", "name" : "pivot", "glass" : true }
+      ],
+      "shadow" : { "kind" : "layer-color", "opacity" : 0.6 },
+      "specular" : true,
+      "translucency" : { "enabled" : false, "value" : 0.3 }
+    },
+    {
+      "layers" : [
+        { "image-name" : "letters.png", "name" : "letters", "glass" : false, "opacity" : 0.55 }
+      ],
+      "shadow" : { "kind" : "none", "opacity" : 0.5 },
+      "translucency" : { "enabled" : false, "value" : 0.5 }
+    }
+  ],
+  "supported-platforms" : { "squares" : [ "macOS" ] }
+}

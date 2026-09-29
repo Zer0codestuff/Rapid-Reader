@@ -76,6 +76,21 @@ if [[ -f "$ROOT_DIR/Sources/RapidReader/Resources/AppIcon.icns" ]]; then
   cp "$ROOT_DIR/Sources/RapidReader/Resources/AppIcon.icns" "$APP_RESOURCES/AppIcon.icns"
 fi
 
+# Liquid Glass icon for macOS 26 and newer; AppIcon.icns above covers older systems.
+ICON_NAME_KEYS=""
+ICON_WORK="$(mktemp -d)"
+if xcrun actool "$ROOT_DIR/Icon/AppIcon.icon" --compile "$ICON_WORK" --platform macosx \
+    --minimum-deployment-target "$MIN_SYSTEM_VERSION" --app-icon AppIcon \
+    --output-partial-info-plist "$ICON_WORK/partial.plist" >/dev/null 2>&1 \
+    && [[ -f "$ICON_WORK/Assets.car" ]]; then
+  cp "$ICON_WORK/Assets.car" "$APP_RESOURCES/Assets.car"
+  ICON_NAME_KEYS="  <key>CFBundleIconName</key>
+  <string>AppIcon</string>"
+else
+  echo "Warning: actool could not compile Icon/AppIcon.icon (Xcode 26 or newer is required); using AppIcon.icns only." >&2
+fi
+rm -rf "$ICON_WORK"
+
 cat >"$INFO_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -91,6 +106,7 @@ cat >"$INFO_PLIST" <<PLIST
   <string>$DISPLAY_NAME</string>
   <key>CFBundleIconFile</key>
   <string>AppIcon</string>
+$ICON_NAME_KEYS
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
