@@ -48,6 +48,7 @@ final class DocumentImportTests: XCTestCase {
 
         let id = try XCTUnwrap(store.items.first?.id)
         store.updateProgress(for: id, sectionIndex: 0, wordIndex: 3)
+        store.flushPendingChanges()
 
         let reloaded = LibraryStore(rootURL: temp)
         let item = try XCTUnwrap(reloaded.items.first)

@@ -96,6 +96,12 @@ struct ContentView: View {
         .onAppear {
             showingFailureAlert = !library.lastFailures.isEmpty
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+            library.flushPendingChanges()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+            library.flushPendingChanges()
+        }
         .alert("Import issue", isPresented: $showingFailureAlert) {
             Button("OK") {
                 library.clearFailures()

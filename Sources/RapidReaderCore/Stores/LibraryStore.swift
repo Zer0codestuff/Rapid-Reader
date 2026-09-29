@@ -14,23 +14,27 @@ public final class LibraryStore: ObservableObject {
     @Published public private(set) var lastFailures: [ImportFailure] = []
 
     public let rootURL: URL
-    private let libraryURL: URL
+    private let persistence: LibraryPersistence
     private let importer: DocumentImportService
     private let fileManager: FileManager
     private var defaultPreferences: ReadingPreferences
     private var isPersistenceBlocked = false
+    private var pendingSave: Task<Void, Never>?
+    private let saveDelay: Duration
 
     public init(
         rootURL: URL = LibraryStore.defaultRootURL(),
         importer: DocumentImportService = DocumentImportService(),
         fileManager: FileManager = .default,
-        defaultPreferences: ReadingPreferences = ReadingPreferences()
+        defaultPreferences: ReadingPreferences = ReadingPreferences(),
+        saveDelay: Duration = .seconds(2)
     ) {
         self.rootURL = rootURL
-        self.libraryURL = rootURL.appendingPathComponent("library.json")
+        self.persistence = LibraryPersistence(rootURL: rootURL, fileManager: fileManager)
         self.importer = importer
         self.fileManager = fileManager
         self.defaultPreferences = defaultPreferences
+        self.saveDelay = saveDelay
         load()
     }
 
@@ -52,26 +56,28 @@ public final class LibraryStore: ObservableObject {
         return items.first { $0.id == selectedID }
     }
 
+    public var backupsURL: URL {
+        persistence.backupsURL
+    }
+
     public func load() {
         items = []
+        pendingSave?.cancel()
+        pendingSave = nil
+
         do {
-            try fileManager.createDirectory(at: rootURL, withIntermediateDirectories: true)
+            try persistence.createDirectories()
         } catch {
             blockPersistence(message: error.localizedDescription)
             return
         }
 
-        guard fileManager.fileExists(atPath: libraryURL.path) else {
-            return
-        }
-
-        let decoded: [LossyLibraryItem]
+        let loaded: LibraryPersistence.LoadedIndex
         do {
-            let data = try Data(contentsOf: libraryURL)
-            decoded = try JSONDecoder.readerDecoder.decode([LossyLibraryItem].self, from: data)
+            loaded = try persistence.readIndex()
         } catch {
             // Never overwrite a library we could not read: move it aside first.
-            if let backup = backupLibraryFile(named: "library-unreadable", move: true) {
+            if let backup = persistence.backupIndex(named: "library-unreadable", move: true) {
                 lastFailures = [ImportFailure(
                     sourceName: "Library",
                     message: "The library could not be read (\(error.localizedDescription)). The original file was kept at \(backup.path)."
@@ -82,31 +88,74 @@ public final class LibraryStore: ObservableObject {
             return
         }
 
+        let decoded: [LossyLibraryItem]
+        let isLegacy: Bool
+        switch loaded {
+        case .missing:
+            return
+        case .legacy(let entries):
+            decoded = entries
+            isLegacy = true
+        case .current(let entries):
+            decoded = entries
+            isLegacy = false
+        }
+
+        var failures: [ImportFailure] = []
         let decodedItems = decoded.compactMap(\.item)
         let skippedCount = decoded.count - decodedItems.count
         if skippedCount > 0 {
-            let backup = backupLibraryFile(named: "library-partial", move: false)
-            lastFailures = [ImportFailure(
+            let backup = persistence.backupIndex(named: "library-partial", move: false)
+            failures.append(ImportFailure(
                 sourceName: "Library",
-                message: "\(skippedCount) item(s) could not be read and were skipped. The original file was kept at \(backup?.path ?? libraryURL.path)."
-            )]
+                message: "\(skippedCount) item(s) could not be read and were skipped. The original file was kept at \(backup?.path ?? persistence.indexURL.path)."
+            ))
             if backup == nil {
                 isPersistenceBlocked = true
             }
+        } else if isLegacy {
+            persistence.backupIndex(named: "library-v1", move: false)
         } else {
-            _ = backupLibraryFile(named: "library-previous", move: false, timestamped: false)
+            persistence.backupIndex(named: "library-previous", move: false, timestamped: false)
         }
 
-        let repairedItems = decodedItems.map(repairedItem)
-        items = repairedItems
+        var contentToWrite: Set<UUID> = []
+        var needsIndexSave = isLegacy || skippedCount > 0
+        var loadedItems: [LibraryItem] = []
+        for var item in decodedItems {
+            if isLegacy {
+                contentToWrite.insert(item.id)
+            } else if let content = persistence.readContent(for: item.id) {
+                item.sections = content.sections
+                item.coverImageData = content.cover
+            } else {
+                failures.append(ImportFailure(
+                    sourceName: item.title,
+                    message: "The text of this document is missing from the library folder."
+                ))
+            }
+
+            let repaired = repairedItem(item)
+            if repaired.sections != item.sections, !item.sections.isEmpty {
+                contentToWrite.insert(item.id)
+            }
+            if repaired.progress != item.progress || repaired.preferences != item.preferences {
+                needsIndexSave = true
+            }
+            loadedItems.append(repaired)
+        }
+
+        items = loadedItems
         selectedID = items.sortedForLibrary.first?.id
-        if repairedItems != decodedItems || skippedCount > 0 {
-            save()
-        }
-    }
+        lastFailures = failures
 
-    public var backupsURL: URL {
-        rootURL.appendingPathComponent("Backups", isDirectory: true)
+        guard !isPersistenceBlocked else { return }
+        for item in items where contentToWrite.contains(item.id) {
+            writeContent(of: item)
+        }
+        if needsIndexSave {
+            saveIndex()
+        }
     }
 
     public func importFiles(_ urls: [URL]) async {
@@ -123,9 +172,10 @@ public final class LibraryStore: ObservableObject {
         }
 
         if !importedItems.isEmpty {
+            importedItems.forEach(writeContent)
             items.insert(contentsOf: importedItems, at: 0)
             selectedID = importedItems.first?.id
-            save()
+            saveIndex()
         }
         lastFailures = failures
     }
@@ -138,10 +188,11 @@ public final class LibraryStore: ObservableObject {
         do {
             let document = try await importer.importArticle(from: url)
             let newItem = item(from: document)
+            writeContent(of: newItem)
             items.insert(newItem, at: 0)
             selectedID = newItem.id
             lastFailures = []
-            save()
+            saveIndex()
         } catch {
             lastFailures = [ImportFailure(sourceName: url.absoluteString, message: error.localizedDescription)]
         }
@@ -151,10 +202,11 @@ public final class LibraryStore: ObservableObject {
         do {
             let document = try importer.importClipboardText(text)
             let newItem = item(from: document)
+            writeContent(of: newItem)
             items.insert(newItem, at: 0)
             selectedID = newItem.id
             lastFailures = []
-            save()
+            saveIndex()
         } catch {
             lastFailures = [ImportFailure(sourceName: "Clipboard", message: error.localizedDescription)]
         }
@@ -168,19 +220,19 @@ public final class LibraryStore: ObservableObject {
         items[index].progress.wordIndex = min(max(wordIndex, 0), maxWords)
         items[index].progress.completedAt = items[index].fractionComplete >= 0.999 ? Date() : nil
         items[index].lastReadAt = Date()
-        save()
+        scheduleSave()
     }
 
     public func updatePreferences(for id: UUID, _ preferences: ReadingPreferences) {
         guard let index = items.firstIndex(where: { $0.id == id }) else { return }
         items[index].preferences = preferences
-        save()
+        scheduleSave()
     }
 
     public func toggleFavorite(_ id: UUID) {
         guard let index = items.firstIndex(where: { $0.id == id }) else { return }
         items[index].isFavorite.toggle()
-        save()
+        saveIndex()
     }
 
     public func addNote(for id: UUID, text: String) {
@@ -192,7 +244,7 @@ public final class LibraryStore: ObservableObject {
             ReaderNote(sectionIndex: progress.sectionIndex, wordIndex: progress.wordIndex, text: trimmed),
             at: 0
         )
-        save()
+        saveIndex()
     }
 
     public func deleteItems(at offsets: IndexSet, from visibleItems: [LibraryItem]) {
@@ -201,7 +253,10 @@ public final class LibraryStore: ObservableObject {
         if let selectedID, ids.contains(selectedID) {
             self.selectedID = items.sortedForLibrary.first?.id
         }
-        save()
+        saveIndex()
+        if !isPersistenceBlocked {
+            ids.forEach(persistence.deleteContent)
+        }
     }
 
     public func select(_ id: UUID?) {
@@ -273,17 +328,38 @@ public final class LibraryStore: ObservableObject {
 
     /// Writes any pending changes to disk immediately.
     public func flushPendingChanges() {
-        save()
+        guard pendingSave != nil else { return }
+        saveIndex()
     }
 
-    private func save() {
+    /// Coalesces frequent updates such as reading progress into a single write.
+    private func scheduleSave() {
+        pendingSave?.cancel()
+        let delay = saveDelay
+        pendingSave = Task { [weak self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled else { return }
+            self?.saveIndex()
+        }
+    }
+
+    private func saveIndex() {
+        pendingSave?.cancel()
+        pendingSave = nil
         guard !isPersistenceBlocked else { return }
         do {
-            try fileManager.createDirectory(at: rootURL, withIntermediateDirectories: true)
-            let data = try JSONEncoder.readerEncoder.encode(items)
-            try data.write(to: libraryURL, options: [.atomic])
+            try persistence.writeIndex(items)
         } catch {
             lastFailures = [ImportFailure(sourceName: "Library", message: error.localizedDescription)]
+        }
+    }
+
+    private func writeContent(of item: LibraryItem) {
+        guard !isPersistenceBlocked else { return }
+        do {
+            try persistence.writeContent(of: item)
+        } catch {
+            lastFailures = [ImportFailure(sourceName: item.title, message: error.localizedDescription)]
         }
     }
 
@@ -294,41 +370,6 @@ public final class LibraryStore: ObservableObject {
             message: "The library could not be opened (\(message)). Changes will not be saved until the problem is fixed."
         )]
     }
-
-    @discardableResult
-    private func backupLibraryFile(named name: String, move: Bool, timestamped: Bool = true) -> URL? {
-        do {
-            try fileManager.createDirectory(at: backupsURL, withIntermediateDirectories: true)
-            let suffix = timestamped ? "-" + Self.backupTimestamp() : ""
-            let destination = backupsURL.appendingPathComponent("\(name)\(suffix).json")
-            if fileManager.fileExists(atPath: destination.path) {
-                try fileManager.removeItem(at: destination)
-            }
-            if move {
-                try fileManager.moveItem(at: libraryURL, to: destination)
-            } else {
-                try fileManager.copyItem(at: libraryURL, to: destination)
-            }
-            return destination
-        } catch {
-            return nil
-        }
-    }
-
-    private static func backupTimestamp() -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyyMMdd-HHmmss"
-        return formatter.string(from: Date())
-    }
-}
-
-private struct LossyLibraryItem: Decodable {
-    let item: LibraryItem?
-
-    init(from decoder: Decoder) throws {
-        item = try? LibraryItem(from: decoder)
-    }
 }
 
 public extension Array where Element == LibraryItem {
@@ -338,22 +379,5 @@ public extension Array where Element == LibraryItem {
             let right = $1.lastReadAt ?? $1.importedAt
             return left > right
         }
-    }
-}
-
-private extension JSONEncoder {
-    static var readerEncoder: JSONEncoder {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        return encoder
-    }
-}
-
-private extension JSONDecoder {
-    static var readerDecoder: JSONDecoder {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
     }
 }

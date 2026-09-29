@@ -128,6 +128,12 @@ struct ReaderView: View {
         }
         .onChange(of: isPlaying) { _, playing in
             nextAdvanceAt = Date(timeIntervalSinceNow: playing ? intervalForCurrentWord() : 0)
+            if !playing {
+                library.flushPendingChanges()
+            }
+        }
+        .onDisappear {
+            library.flushPendingChanges()
         }
         .onChange(of: preferences) { _, _ in
             savePreferences()
