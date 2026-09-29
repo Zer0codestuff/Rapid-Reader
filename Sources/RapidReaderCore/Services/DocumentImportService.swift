@@ -87,6 +87,9 @@ public final class DocumentImportService: Sendable {
     }
 
     public func importArticle(from url: URL) async throws -> ImportedDocument {
+        guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.host != nil else {
+            throw DocumentImportError.invalidURL(url.absoluteString)
+        }
         let (data, response): (Data, URLResponse)
         do {
             (data, response) = try await URLSession.shared.data(from: url)
@@ -98,12 +101,12 @@ public final class DocumentImportService: Sendable {
             throw DocumentImportError.networkFailure("The server returned HTTP \(http.statusCode).")
         }
 
-        let html = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) ?? ""
+        let html = HTMLTextExtractor.decode(data)
         let title = TextProcessor.cleanedTitle(
             HTMLTextExtractor.title(fromHTML: html),
             fallback: url.host(percentEncoded: false) ?? "Web Article"
         )
-        let body = readableArticleText(from: html, data: data, baseURL: url)
+        let body = HTMLTextExtractor.articleText(html)
         guard !body.isEmpty else {
             throw DocumentImportError.emptyDocument(url.absoluteString)
         }
@@ -176,15 +179,4 @@ public final class DocumentImportService: Sendable {
         )
     }
 
-    private func readableArticleText(from html: String, data: Data, baseURL: URL) -> String {
-        if let articleRange = html.range(of: #"<article[\s\S]*?</article>"#, options: [.regularExpression, .caseInsensitive]) {
-            return HTMLTextExtractor.plainText(from: Data(String(html[articleRange]).utf8), baseURL: baseURL)
-        }
-
-        let stripped = html
-            .replacingOccurrences(of: #"<nav[\s\S]*?</nav>"#, with: " ", options: [.regularExpression, .caseInsensitive])
-            .replacingOccurrences(of: #"<footer[\s\S]*?</footer>"#, with: " ", options: [.regularExpression, .caseInsensitive])
-            .replacingOccurrences(of: #"<aside[\s\S]*?</aside>"#, with: " ", options: [.regularExpression, .caseInsensitive])
-        return HTMLTextExtractor.plainText(from: Data(stripped.utf8), baseURL: baseURL)
-    }
 }

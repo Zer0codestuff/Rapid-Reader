@@ -11,12 +11,13 @@ let package = Package(
         .executable(name: "RapidReader", targets: ["RapidReader"])
     ],
     dependencies: [
-        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19")
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
+        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.6.0")
     ],
     targets: [
         .target(
             name: "RapidReaderCore",
-            dependencies: ["ZIPFoundation"],
+            dependencies: ["ZIPFoundation", "SwiftSoup"],
             path: "Sources/RapidReaderCore"
         ),
         .executableTarget(

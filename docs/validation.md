@@ -21,3 +21,8 @@
 
 - `swift test`: 21 tests passed, including content removal and selection persistence. `swift build` passed for the context menu, Delete command, and confirmation dialog.
 - Deletion now writes the index before deleting document files.
+
+## HTML and articles
+
+- Existing 21 tests and three new extraction tests pass after correcting a test expectation to retain paragraph breaks.
+- Covered nested article markup, Wikipedia navigation, entities, inline emphasis, and paragraph boundaries. No JavaScript or external HTML resources are loaded.
