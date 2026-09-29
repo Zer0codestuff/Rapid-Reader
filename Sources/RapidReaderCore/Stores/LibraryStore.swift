@@ -18,6 +18,7 @@ public final class LibraryStore: ObservableObject {
     private let importer: DocumentImportService
     private let fileManager: FileManager
     private var defaultPreferences: ReadingPreferences
+    private var isPersistenceBlocked = false
 
     public init(
         rootURL: URL = LibraryStore.defaultRootURL(),
@@ -52,24 +53,60 @@ public final class LibraryStore: ObservableObject {
     }
 
     public func load() {
+        items = []
         do {
             try fileManager.createDirectory(at: rootURL, withIntermediateDirectories: true)
-            guard fileManager.fileExists(atPath: libraryURL.path) else {
-                items = []
-                return
-            }
-            let data = try Data(contentsOf: libraryURL)
-            let decodedItems = try JSONDecoder.readerDecoder.decode([LibraryItem].self, from: data)
-            let repairedItems = decodedItems.map(repairedItem)
-            items = repairedItems
-            selectedID = items.sortedForLibrary.first?.id
-            if repairedItems != decodedItems {
-                save()
-            }
         } catch {
-            items = []
-            lastFailures = [ImportFailure(sourceName: "Library", message: error.localizedDescription)]
+            blockPersistence(message: error.localizedDescription)
+            return
         }
+
+        guard fileManager.fileExists(atPath: libraryURL.path) else {
+            return
+        }
+
+        let decoded: [LossyLibraryItem]
+        do {
+            let data = try Data(contentsOf: libraryURL)
+            decoded = try JSONDecoder.readerDecoder.decode([LossyLibraryItem].self, from: data)
+        } catch {
+            // Never overwrite a library we could not read: move it aside first.
+            if let backup = backupLibraryFile(named: "library-unreadable", move: true) {
+                lastFailures = [ImportFailure(
+                    sourceName: "Library",
+                    message: "The library could not be read (\(error.localizedDescription)). The original file was kept at \(backup.path)."
+                )]
+            } else {
+                blockPersistence(message: error.localizedDescription)
+            }
+            return
+        }
+
+        let decodedItems = decoded.compactMap(\.item)
+        let skippedCount = decoded.count - decodedItems.count
+        if skippedCount > 0 {
+            let backup = backupLibraryFile(named: "library-partial", move: false)
+            lastFailures = [ImportFailure(
+                sourceName: "Library",
+                message: "\(skippedCount) item(s) could not be read and were skipped. The original file was kept at \(backup?.path ?? libraryURL.path)."
+            )]
+            if backup == nil {
+                isPersistenceBlocked = true
+            }
+        } else {
+            _ = backupLibraryFile(named: "library-previous", move: false, timestamped: false)
+        }
+
+        let repairedItems = decodedItems.map(repairedItem)
+        items = repairedItems
+        selectedID = items.sortedForLibrary.first?.id
+        if repairedItems != decodedItems || skippedCount > 0 {
+            save()
+        }
+    }
+
+    public var backupsURL: URL {
+        rootURL.appendingPathComponent("Backups", isDirectory: true)
     }
 
     public func importFiles(_ urls: [URL]) async {
@@ -234,7 +271,13 @@ public final class LibraryStore: ObservableObject {
         )
     }
 
+    /// Writes any pending changes to disk immediately.
+    public func flushPendingChanges() {
+        save()
+    }
+
     private func save() {
+        guard !isPersistenceBlocked else { return }
         do {
             try fileManager.createDirectory(at: rootURL, withIntermediateDirectories: true)
             let data = try JSONEncoder.readerEncoder.encode(items)
@@ -242,6 +285,49 @@ public final class LibraryStore: ObservableObject {
         } catch {
             lastFailures = [ImportFailure(sourceName: "Library", message: error.localizedDescription)]
         }
+    }
+
+    private func blockPersistence(message: String) {
+        isPersistenceBlocked = true
+        lastFailures = [ImportFailure(
+            sourceName: "Library",
+            message: "The library could not be opened (\(message)). Changes will not be saved until the problem is fixed."
+        )]
+    }
+
+    @discardableResult
+    private func backupLibraryFile(named name: String, move: Bool, timestamped: Bool = true) -> URL? {
+        do {
+            try fileManager.createDirectory(at: backupsURL, withIntermediateDirectories: true)
+            let suffix = timestamped ? "-" + Self.backupTimestamp() : ""
+            let destination = backupsURL.appendingPathComponent("\(name)\(suffix).json")
+            if fileManager.fileExists(atPath: destination.path) {
+                try fileManager.removeItem(at: destination)
+            }
+            if move {
+                try fileManager.moveItem(at: libraryURL, to: destination)
+            } else {
+                try fileManager.copyItem(at: libraryURL, to: destination)
+            }
+            return destination
+        } catch {
+            return nil
+        }
+    }
+
+    private static func backupTimestamp() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        return formatter.string(from: Date())
+    }
+}
+
+private struct LossyLibraryItem: Decodable {
+    let item: LibraryItem?
+
+    init(from decoder: Decoder) throws {
+        item = try? LibraryItem(from: decoder)
     }
 }
 

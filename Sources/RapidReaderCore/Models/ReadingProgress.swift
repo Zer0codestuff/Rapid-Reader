@@ -10,4 +10,13 @@ public struct ReadingProgress: Codable, Equatable, Sendable {
         self.wordIndex = wordIndex
         self.completedAt = completedAt
     }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            sectionIndex: try container.decodeIfPresent(Int.self, forKey: .sectionIndex) ?? 0,
+            wordIndex: try container.decodeIfPresent(Int.self, forKey: .wordIndex) ?? 0,
+            completedAt: try container.decodeIfPresent(Date.self, forKey: .completedAt)
+        )
+    }
 }

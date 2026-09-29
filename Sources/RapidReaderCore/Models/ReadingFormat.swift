@@ -11,6 +11,11 @@ public enum ReadingFormat: String, Codable, CaseIterable, Sendable {
     case webArticle
     case unknown
 
+    public init(from decoder: Decoder) throws {
+        let rawValue = try decoder.singleValueContainer().decode(String.self)
+        self = ReadingFormat(rawValue: rawValue) ?? .unknown
+    }
+
     public var displayName: String {
         switch self {
         case .epub: "EPUB"

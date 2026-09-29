@@ -93,6 +93,9 @@ struct ContentView: View {
                 }
             }
         }
+        .onAppear {
+            showingFailureAlert = !library.lastFailures.isEmpty
+        }
         .alert("Import issue", isPresented: $showingFailureAlert) {
             Button("OK") {
                 library.clearFailures()

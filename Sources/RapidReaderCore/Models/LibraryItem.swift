@@ -48,6 +48,27 @@ public struct LibraryItem: Identifiable, Codable, Equatable, Sendable {
         self.coverImageData = coverImageData
     }
 
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Untitled"
+        self.init(
+            id: try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID(),
+            title: title,
+            author: try container.decodeIfPresent(String.self, forKey: .author),
+            sourceName: try container.decodeIfPresent(String.self, forKey: .sourceName) ?? title,
+            sourceURL: try container.decodeIfPresent(String.self, forKey: .sourceURL),
+            format: try container.decodeIfPresent(ReadingFormat.self, forKey: .format) ?? .unknown,
+            importedAt: try container.decodeIfPresent(Date.self, forKey: .importedAt) ?? Date(),
+            lastReadAt: try container.decodeIfPresent(Date.self, forKey: .lastReadAt),
+            sections: try container.decodeIfPresent([BookSection].self, forKey: .sections) ?? [],
+            progress: try container.decodeIfPresent(ReadingProgress.self, forKey: .progress) ?? ReadingProgress(),
+            preferences: try container.decodeIfPresent(ReadingPreferences.self, forKey: .preferences) ?? ReadingPreferences(),
+            isFavorite: try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false,
+            notes: try container.decodeIfPresent([ReaderNote].self, forKey: .notes) ?? [],
+            coverImageData: try container.decodeIfPresent(Data.self, forKey: .coverImageData)
+        )
+    }
+
     public var totalWordCount: Int {
         sections.reduce(0) { $0 + $1.wordCount }
     }
@@ -89,5 +110,16 @@ public struct ReaderNote: Identifiable, Codable, Equatable, Sendable {
         self.wordIndex = wordIndex
         self.text = text
         self.createdAt = createdAt
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID(),
+            sectionIndex: try container.decodeIfPresent(Int.self, forKey: .sectionIndex) ?? 0,
+            wordIndex: try container.decodeIfPresent(Int.self, forKey: .wordIndex) ?? 0,
+            text: try container.decodeIfPresent(String.self, forKey: .text) ?? "",
+            createdAt: try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        )
     }
 }

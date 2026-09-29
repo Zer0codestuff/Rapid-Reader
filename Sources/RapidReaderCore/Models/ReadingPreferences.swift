@@ -23,4 +23,17 @@ public struct ReadingPreferences: Codable, Equatable, Sendable {
         self.pauseOnPunctuation = pauseOnPunctuation
         self.focusMode = focusMode
     }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = ReadingPreferences()
+        self.init(
+            wordsPerMinute: try container.decodeIfPresent(Int.self, forKey: .wordsPerMinute) ?? defaults.wordsPerMinute,
+            fontSize: try container.decodeIfPresent(Double.self, forKey: .fontSize) ?? defaults.fontSize,
+            chunkSize: try container.decodeIfPresent(Int.self, forKey: .chunkSize) ?? defaults.chunkSize,
+            showContext: try container.decodeIfPresent(Bool.self, forKey: .showContext) ?? defaults.showContext,
+            pauseOnPunctuation: try container.decodeIfPresent(Bool.self, forKey: .pauseOnPunctuation) ?? defaults.pauseOnPunctuation,
+            focusMode: try container.decodeIfPresent(Bool.self, forKey: .focusMode) ?? defaults.focusMode
+        )
+    }
 }
