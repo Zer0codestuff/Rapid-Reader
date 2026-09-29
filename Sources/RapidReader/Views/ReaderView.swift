@@ -99,6 +99,7 @@ struct ReaderView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(readerBackground)
+        .background(ReaderKeyboardHandler(onPlayPause: togglePlayback, onBack: session.back, onForward: session.forward))
         .onAppear {
             session.onProgressChange = { section, word in
                 library.updateProgress(for: item.id, sectionIndex: section, wordIndex: word)
@@ -201,6 +202,7 @@ private struct ReaderHeader: View {
                 Image(systemName: item.isFavorite ? "star.fill" : "star")
             }
             .help(item.isFavorite ? "Unfavorite" : "Favorite")
+            .accessibilityLabel(item.isFavorite ? "Unfavorite" : "Favorite")
 
             Button(action: onShowNotes) {
                 Label("Notes", systemImage: "note.text")
@@ -330,8 +332,8 @@ private struct ReaderControls: View {
                 Button(action: onBack) {
                     Image(systemName: "backward.fill")
                 }
-                .keyboardShortcut(.leftArrow, modifiers: [])
                 .help("Back")
+                .accessibilityLabel("Back")
 
                 Button(action: onPlayPause) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
@@ -339,14 +341,14 @@ private struct ReaderControls: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .keyboardShortcut(.space, modifiers: [])
                 .help(isPlaying ? "Pause" : "Play")
+                .accessibilityLabel(isPlaying ? "Pause" : "Play")
 
                 Button(action: onForward) {
                     Image(systemName: "forward.fill")
                 }
-                .keyboardShortcut(.rightArrow, modifiers: [])
                 .help("Forward")
+                .accessibilityLabel("Forward")
 
                 Divider()
                     .frame(height: 26)

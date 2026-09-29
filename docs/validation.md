@@ -11,3 +11,8 @@
 
 - `swift test`: 21 tests passed. Unicode, nonbreaking spaces, zero-width spaces, punctuation-only separators, and quoted punctuation covered.
 - Full-text rendering now uses exactly the RSVP token ranges and keeps its attributed document between word selections.
+
+## Keyboard focus
+
+- `swift build` passed. In the native app with an isolated library, typing `Reader`, pressing Left twice, and typing `X` produced `ReadXer`; the reader remained at word 0.
+- Playback buttons now expose Play/Pause, Back, Forward, and Favorite labels in the accessibility tree.
