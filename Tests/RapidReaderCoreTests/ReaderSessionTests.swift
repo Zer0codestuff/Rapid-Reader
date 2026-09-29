@@ -87,4 +87,46 @@ final class ReaderSessionTests: XCTestCase {
         print("Token lookup, 20 iterations, \(section.wordCount) words: repeated=\(repeated), cached=\(cached)")
         XCTAssertLessThan(cached, repeated)
     }
+
+    func testOptionalPacingIsOffByDefaultAndScalesDuration() {
+        let base = ReadingPreferences(wordsPerMinute: 600, pauseOnPunctuation: false)
+        XCTAssertEqual(RSVPTiming.displayDuration(for: ["extraordinarily"], preferences: base, elapsed: 0), 0.1, accuracy: 0.0001)
+
+        var longWords = base
+        longWords.pauseOnLongWords = true
+        XCTAssertEqual(RSVPTiming.displayDuration(for: ["short"], preferences: longWords), 0.1, accuracy: 0.0001)
+        XCTAssertEqual(RSVPTiming.displayDuration(for: ["extraordinary"], preferences: longWords), 0.125, accuracy: 0.0001)
+        XCTAssertEqual(RSVPTiming.displayDuration(for: ["incomprehensibilities"], preferences: longWords), 0.16, accuracy: 0.0001)
+
+        var warmUp = base
+        warmUp.rampUpSeconds = 4
+        XCTAssertEqual(RSVPTiming.displayDuration(for: ["word"], preferences: warmUp, elapsed: 0), 0.2, accuracy: 0.0001)
+        XCTAssertEqual(RSVPTiming.displayDuration(for: ["word"], preferences: warmUp, elapsed: 2), 0.1 / 0.75, accuracy: 0.0001)
+        XCTAssertEqual(RSVPTiming.displayDuration(for: ["word"], preferences: warmUp, elapsed: 10), 0.1, accuracy: 0.0001)
+    }
+
+    @MainActor
+    func testResumeRewindsOnlyAfterPlaybackPause() {
+        let text = Array(repeating: "word", count: 50).joined(separator: " ")
+        var preferences = ReadingPreferences()
+        preferences.resumeRewindWords = 5
+        let session = ReaderSession(sections: [BookSection(title: "One", text: text)], wordIndex: 20, preferences: preferences)
+        session.play()
+        session.pause()
+        XCTAssertEqual(session.wordIndex, 20)
+        session.play()
+        XCTAssertEqual(session.wordIndex, 15)
+        session.pause()
+        session.setWordIndex(30)
+        session.play()
+        XCTAssertEqual(session.wordIndex, 30)
+        session.pause()
+        session.jump(toSection: 0, word: 3)
+        session.play()
+        XCTAssertEqual(session.wordIndex, 3)
+        session.pause()
+        session.play()
+        XCTAssertEqual(session.wordIndex, 0)
+        session.pause()
+    }
 }

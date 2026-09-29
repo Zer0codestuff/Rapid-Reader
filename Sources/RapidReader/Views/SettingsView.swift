@@ -9,6 +9,10 @@ struct SettingsView: View {
     @AppStorage("readerDefaultPauses") private var pauses = true
     @AppStorage("readerDefaultFocus") private var focus = false
 
+    @AppStorage("readerDefaultRamp") private var ramp = 0.0
+    @AppStorage("readerDefaultLongWords") private var longWords = false
+    @AppStorage("readerDefaultRewind") private var rewind = 0
+
     var body: some View {
         Form {
             Section("Reading Defaults") {
@@ -26,6 +30,9 @@ struct SettingsView: View {
                 Toggle("Context", isOn: $showContext)
                 Toggle("Punctuation pauses", isOn: $pauses)
                 Toggle("Focus", isOn: $focus)
+                Stepper("Warm-up: \(Int(ramp)) s", value: $ramp, in: 0...10, step: 1)
+                Toggle("Pause on long words", isOn: $longWords)
+                Stepper("Rewind on resume: \(rewind) words", value: $rewind, in: 0...20)
                 Text("Defaults apply to newly imported documents.").font(.caption).foregroundStyle(.secondary)
             }
         }

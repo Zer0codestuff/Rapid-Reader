@@ -10,7 +10,10 @@ enum ReadingDefaults {
             chunkSize: defaults.object(forKey: "readerDefaultChunkSize") as? Int ?? fallback.chunkSize,
             showContext: defaults.object(forKey: "readerDefaultContext") as? Bool ?? fallback.showContext,
             pauseOnPunctuation: defaults.object(forKey: "readerDefaultPauses") as? Bool ?? fallback.pauseOnPunctuation,
-            focusMode: defaults.object(forKey: "readerDefaultFocus") as? Bool ?? fallback.focusMode
+            focusMode: defaults.object(forKey: "readerDefaultFocus") as? Bool ?? fallback.focusMode,
+            rampUpSeconds: defaults.object(forKey: "readerDefaultRamp") as? Double ?? fallback.rampUpSeconds,
+            pauseOnLongWords: defaults.object(forKey: "readerDefaultLongWords") as? Bool ?? fallback.pauseOnLongWords,
+            resumeRewindWords: defaults.object(forKey: "readerDefaultRewind") as? Int ?? fallback.resumeRewindWords
         ).clamped()
     }
 }

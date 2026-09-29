@@ -55,3 +55,8 @@
 ## Remaining time
 
 - Six reader session tests passed. Estimates update after seeking and changing WPM without re-tokenizing the book.
+
+## Optional pacing and rewind
+
+- `swift test`: 34 tests passed. Covered warm-up, long-word scaling, defaults off for older library data, rewind after a playback pause, and no rewind after seeking.
+- Native app with an isolated library: the Reading options popover opens from the reader and shows the three controls.

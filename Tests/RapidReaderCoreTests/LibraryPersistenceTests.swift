@@ -33,6 +33,9 @@ final class LibraryPersistenceTests: XCTestCase {
         XCTAssertEqual(item.format, .unknown)
         XCTAssertFalse(item.isFavorite)
         XCTAssertFalse(item.preferences.focusMode)
+        XCTAssertEqual(item.preferences.rampUpSeconds, 0)
+        XCTAssertFalse(item.preferences.pauseOnLongWords)
+        XCTAssertEqual(item.preferences.resumeRewindWords, 0)
         XCTAssertTrue(reloaded.lastFailures.isEmpty)
     }
 

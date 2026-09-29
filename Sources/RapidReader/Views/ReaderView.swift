@@ -14,6 +14,7 @@ struct ReaderView: View {
 
     @StateObject private var session: ReaderSession
     @State private var showingNotes = false
+    @State private var showingReadingOptions = false
     @State private var noteText = ""
     @State private var readerMode: ReaderMode = .rsvp
 
@@ -80,6 +81,13 @@ struct ReaderView: View {
                     Text("Section: \(session.remainingSectionSeconds.readerDuration)")
                     Spacer()
                     Text("Book: \(session.remainingBookSeconds.readerDuration)")
+                    Button { showingReadingOptions = true } label: {
+                        Image(systemName: "slider.horizontal.3")
+                    }
+                    .accessibilityLabel("Reading options")
+                    .popover(isPresented: $showingReadingOptions) {
+                        ReadingOptionsView(preferences: $session.preferences)
+                    }
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)

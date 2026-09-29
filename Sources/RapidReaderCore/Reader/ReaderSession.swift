@@ -27,6 +27,8 @@ public final class ReaderSession: ObservableObject {
     /// Called with `(sectionIndex, wordIndex)` whenever progress should be persisted.
     public var onProgressChange: ((Int, Int) -> Void)?
 
+    private var playbackStartedAt: ContinuousClock.Instant?
+    private var shouldRewindOnResume = false
     private var tokenCache: [Int: [String]] = [:]
     private var playbackTask: Task<Void, Never>?
     private var lastProgressReport = ContinuousClock.now
@@ -106,12 +108,16 @@ public final class ReaderSession: ObservableObject {
         guard !isPlaying else { return }
         if isAtEnd {
             jump(toSection: 0, word: 0)
+        } else if shouldRewindOnResume {
+            wordIndex = max(0, wordIndex - preferences.resumeRewindWords)
         }
+        shouldRewindOnResume = false
         while words.isEmpty, sectionIndex + 1 < sections.count {
             moveToSection(sectionIndex + 1)
             wordIndex = 0
         }
         guard !words.isEmpty else { return }
+        playbackStartedAt = clock.now
         isPlaying = true
         playbackTask?.cancel()
         let clock = self.clock
@@ -133,6 +139,7 @@ public final class ReaderSession: ObservableObject {
     }
 
     public func pause() {
+        if isPlaying { shouldRewindOnResume = true }
         isPlaying = false
         playbackTask?.cancel()
         playbackTask = nil
@@ -141,19 +148,22 @@ public final class ReaderSession: ObservableObject {
 
     /// How long the currently displayed chunk stays on screen.
     public func currentDisplayDuration() -> TimeInterval {
-        RSVPTiming.displayDuration(for: displayWords, preferences: preferences)
+        let elapsed = playbackStartedAt.map { $0.duration(to: clock.now).secondsValue } ?? 0
+        return RSVPTiming.displayDuration(for: displayWords, preferences: preferences, elapsed: elapsed)
     }
 
     // MARK: Navigation
 
     public func forward() {
         pause()
+        shouldRewindOnResume = false
         step(forward: true)
         reportProgress(force: true)
     }
 
     public func back() {
         pause()
+        shouldRewindOnResume = false
         step(forward: false)
         reportProgress(force: true)
     }
@@ -165,12 +175,14 @@ public final class ReaderSession: ObservableObject {
 
     public func setWordIndex(_ index: Int) {
         pause()
+        shouldRewindOnResume = false
         wordIndex = min(max(index, 0), maxWordIndex)
         reportProgress(force: true)
     }
 
     public func jump(toSection section: Int, word: Int) {
         pause()
+        shouldRewindOnResume = false
         moveToSection(section)
         wordIndex = min(max(word, 0), maxWordIndex)
         reportProgress(force: true)
@@ -223,12 +235,27 @@ public final class ReaderSession: ObservableObject {
 
 public enum RSVPTiming {
     /// Seconds a chunk of words stays on screen at the given preferences.
-    public static func displayDuration(for words: [String], preferences: ReadingPreferences) -> TimeInterval {
+    public static func displayDuration(for words: [String], preferences: ReadingPreferences, elapsed: TimeInterval = .infinity) -> TimeInterval {
+        let preferences = preferences.clamped()
         let chunk = max(words.count, 1)
-        let base = 60.0 * Double(chunk) / Double(max(preferences.wordsPerMinute, 1))
-        guard preferences.pauseOnPunctuation, let last = words.last else {
-            return base
+        var duration = 60.0 * Double(chunk) / Double(preferences.wordsPerMinute)
+        if preferences.pauseOnPunctuation, let last = words.last {
+            duration *= RSVPWord(last).punctuationDelayMultiplier
         }
-        return base * RSVPWord(last).punctuationDelayMultiplier
+        if preferences.pauseOnLongWords {
+            let length = words.map { $0.count }.max() ?? 0
+            duration *= 1 + min(0.6, Double(max(0, length - 8)) * 0.05)
+        }
+        if preferences.rampUpSeconds > 0 {
+            let fraction = min(1, max(0, elapsed / preferences.rampUpSeconds))
+            duration /= 0.5 + 0.5 * fraction
+        }
+        return duration
+    }
+}
+
+extension Duration {
+    var secondsValue: Double {
+        Double(components.seconds) + Double(components.attoseconds) / 1e18
     }
 }
