@@ -1,6 +1,6 @@
 # Rapid Reader
 
-Rapid Reader is a native macOS app for focused long-form reading. It combines rapid serial visual presentation (RSVP) with a normal full-text reader, so you can move quickly through books and articles while still being able to inspect the original text and resume from any word.
+Rapid Reader 2.0 is a native macOS app for focused long-form reading, redesigned around a quiet stage, Liquid Glass controls, and a new focus-point icon. It combines rapid serial visual presentation (RSVP) with a normal full-text reader, so you can move quickly through books and articles while still being able to inspect the original text and resume from any word.
 
 ![Rapid Reader RSVP mode](docs/screenshots/rapid-reader-rsvp.png)
 
@@ -58,7 +58,7 @@ swift test
 Create a universal release DMG (release configuration, arm64 and x86_64, version and build number in `Info.plist`):
 
 ```bash
-./script/package_dmg.sh 1.1.0
+./script/package_dmg.sh 2.0
 ```
 
 The packaged app is written to `dist/Rapid Reader.app`, and the DMG is written to `build/package/`. `build_and_run.sh` accepts the same settings through `CONFIGURATION=release`, `UNIVERSAL=1`, `APP_VERSION`, and `BUILD_NUMBER`.
@@ -68,7 +68,7 @@ Optional signing and notarization, with credentials on the build Mac:
 ```bash
 DEVELOPER_ID_APPLICATION="Developer ID Application: Name (TEAMID)" \
 NOTARY_PROFILE=rapid-reader-notary \
-./script/package_dmg.sh 1.1.0
+./script/package_dmg.sh 2.0
 ```
 
 `NOTARY_PROFILE` is a keychain profile created with `xcrun notarytool store-credentials`.
@@ -85,20 +85,22 @@ One-time setup by the owner:
 Local release with updates:
 
 ```bash
-SPARKLE_PUBLIC_KEY=<public key> ./script/package_dmg.sh 1.1.0
-./script/make_appcast.sh 1.1.0   # uses the keychain key, or SPARKLE_PRIVATE_KEY_FILE
+SPARKLE_PUBLIC_KEY=<public key> ./script/package_dmg.sh 2.0
+./script/make_appcast.sh 2.0   # uses the keychain key, or SPARKLE_PRIVATE_KEY_FILE
 ```
 
-Upload the DMG and `build/appcast/appcast.xml` to the `v1.1.0` release. The tag workflow does this automatically when the secret and variable exist. Optional release notes go in `docs/release-notes/<version>.html`. Losing the private key means existing installs can no longer verify updates.
+Upload the DMG and `build/appcast/appcast.xml` to the `v2.0` release. The tag workflow does this automatically when the secret and variable exist. Optional release notes go in `docs/release-notes/<version>.html`. Losing the private key means existing installs can no longer verify updates.
 
 ## Releases
 
-Pushing a tag such as `v1.1.0` runs `.github/workflows/release.yml`, which tests, packages the DMG, and attaches it to a draft GitHub release for review. The workflow can also be started manually to build a DMG artifact without creating a release. CI signs ad-hoc; Developer ID signing and notarization currently run locally.
+Pushing a tag such as `v2.0` runs `.github/workflows/release.yml`, which tests, packages the DMG, and attaches it to a draft GitHub release for review. The workflow can also be started manually to build a DMG artifact without creating a release. CI signs ad-hoc; Developer ID signing and notarization currently run locally.
 
 ## Keyboard And Reader Controls
 
 - `Space`: play or pause RSVP playback.
 - `Left Arrow` / `Right Arrow`: move backward or forward.
+- `Up Arrow` / `Down Arrow`: raise or lower the speed.
+- `Command-,`: open Settings.
 - `Command-O`: import files.
 - `Command-F`: search in the current document.
 - Section picker: jump to a specific chapter or section.
