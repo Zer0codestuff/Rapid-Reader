@@ -65,3 +65,8 @@
 
 - Found in native QA: opening a document from Finder while the app ran created a second window with a second reader session on the same library. The app now uses one `Window` scene.
 - Checked with an isolated library: Finder open keeps one window; closing the window keeps the process running; Dock reopen and Finder open both show the window again in the same process.
+
+## Search in document
+
+- `swift test`: 38 tests passed. Covered word index mapping across sections, case and diacritic folding, phrases across words, result limits, and context trimming.
+- Native app with an isolated library: Cmd+F opens the popover with the field focused (focus needed a short delay because the popover is not key on appear). "vocabulary appears" returned 200 matches in a 2,800-word document; clicking the fourth result closed the popover and RSVP showed "vocabulary".

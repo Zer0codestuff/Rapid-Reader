@@ -15,6 +15,8 @@ struct ReaderView: View {
     @StateObject private var session: ReaderSession
     @State private var showingNotes = false
     @State private var showingReadingOptions = false
+    @State private var showingSearch = false
+    @State private var searchQuery = ""
     @State private var noteText = ""
     @State private var readerMode: ReaderMode = .rsvp
 
@@ -47,8 +49,15 @@ struct ReaderView: View {
                         readerMode = mode
                     }
                 ),
+                showingSearch: $showingSearch,
                 onToggleFavorite: { library.toggleFavorite(item.id) },
-                onShowNotes: { session.pause(); showingNotes = true }
+                onShowNotes: { session.pause(); showingNotes = true },
+                search: {
+                    DocumentSearchView(sections: item.sections, query: $searchQuery) { match in
+                        session.jump(toSection: match.sectionIndex, word: match.wordIndex)
+                        showingSearch = false
+                    }
+                }
             )
 
             Divider()
@@ -176,14 +185,16 @@ struct ReaderView: View {
 
 }
 
-private struct ReaderHeader: View {
+private struct ReaderHeader<Search: View>: View {
     let item: RapidReaderCore.LibraryItem
     let section: BookSection
     let sectionIndex: Int
     let totalSections: Int
     @Binding var readerMode: ReaderView.ReaderMode
+    @Binding var showingSearch: Bool
     let onToggleFavorite: () -> Void
     let onShowNotes: () -> Void
+    @ViewBuilder let search: () -> Search
 
     var body: some View {
         HStack(spacing: 16) {
@@ -220,6 +231,14 @@ private struct ReaderHeader: View {
             .labelsHidden()
             .frame(width: 124)
             .help("Reader mode")
+
+            Button { showingSearch = true } label: {
+                Image(systemName: "magnifyingglass")
+            }
+            .keyboardShortcut("f", modifiers: .command)
+            .help("Search in document")
+            .accessibilityLabel("Search in document")
+            .popover(isPresented: $showingSearch, arrowEdge: .bottom, content: search)
 
             Button(action: onToggleFavorite) {
                 Image(systemName: item.isFavorite ? "star.fill" : "star")
