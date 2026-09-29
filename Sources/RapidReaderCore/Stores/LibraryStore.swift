@@ -82,8 +82,8 @@ public final class LibraryStore: ObservableObject {
             // Never overwrite a library we could not read: move it aside first.
             if let backup = persistence.backupIndex(named: "library-unreadable", move: true) {
                 lastFailures = [ImportFailure(
-                    sourceName: "Library",
-                    message: "The library could not be read (\(error.localizedDescription)). The original file was kept at \(backup.path)."
+                    sourceName: String(localized: "Library", bundle: .module),
+                    message: String(localized: "The library could not be read (\(error.localizedDescription)). The original file was kept at \(backup.path).", bundle: .module)
                 )]
             } else {
                 blockPersistence(message: error.localizedDescription)
@@ -110,8 +110,8 @@ public final class LibraryStore: ObservableObject {
         if skippedCount > 0 {
             let backup = persistence.backupIndex(named: "library-partial", move: false)
             failures.append(ImportFailure(
-                sourceName: "Library",
-                message: "\(skippedCount) item(s) could not be read and were skipped. The original file was kept at \(backup?.path ?? persistence.indexURL.path)."
+                sourceName: String(localized: "Library", bundle: .module),
+                message: String(localized: "\(skippedCount) item(s) could not be read and were skipped. The original file was kept at \(backup?.path ?? persistence.indexURL.path).", bundle: .module)
             ))
             if backup == nil {
                 isPersistenceBlocked = true
@@ -134,7 +134,7 @@ public final class LibraryStore: ObservableObject {
             } else {
                 failures.append(ImportFailure(
                     sourceName: item.title,
-                    message: "The text of this document is missing from the library folder."
+                    message: String(localized: "The text of this document is missing from the library folder.", bundle: .module)
                 ))
             }
 
@@ -169,7 +169,7 @@ public final class LibraryStore: ObservableObject {
         do {
             try persistence.writeStatistics(statistics)
         } catch {
-            lastFailures = [ImportFailure(sourceName: "Statistics", message: error.localizedDescription)]
+            lastFailures = [ImportFailure(sourceName: String(localized: "Statistics", bundle: .module), message: error.localizedDescription)]
         }
     }
 
@@ -180,8 +180,8 @@ public final class LibraryStore: ObservableObject {
             // Keep unreadable statistics aside instead of overwriting them.
             if let backup = persistence.backupIndex(named: "statistics-unreadable", move: true, source: persistence.statisticsURL) {
                 lastFailures.append(ImportFailure(
-                    sourceName: "Statistics",
-                    message: "Reading statistics could not be read. The original file was kept at \(backup.path)."
+                    sourceName: String(localized: "Statistics", bundle: .module),
+                    message: String(localized: "Reading statistics could not be read. The original file was kept at \(backup.path).", bundle: .module)
                 ))
             } else {
                 isStatisticsBlocked = true
@@ -221,7 +221,7 @@ public final class LibraryStore: ObservableObject {
             try insertDocument(importer.importClipboardText(text))
             lastFailures = []
         } catch {
-            lastFailures = [ImportFailure(sourceName: "Clipboard", message: error.localizedDescription)]
+            lastFailures = [ImportFailure(sourceName: String(localized: "Clipboard", bundle: .module), message: error.localizedDescription)]
         }
     }
 
@@ -298,7 +298,7 @@ public final class LibraryStore: ObservableObject {
         do {
             try persistence.writeIndex(remaining)
         } catch {
-            recordFailure(sourceName: "Library", message: error.localizedDescription)
+            recordFailure(sourceName: String(localized: "Library", bundle: .module), message: error.localizedDescription)
             return
         }
         pendingSave?.cancel()
@@ -394,7 +394,7 @@ public final class LibraryStore: ObservableObject {
         do {
             try persistence.writeIndex(items)
         } catch {
-            lastFailures = [ImportFailure(sourceName: "Library", message: error.localizedDescription)]
+            lastFailures = [ImportFailure(sourceName: String(localized: "Library", bundle: .module), message: error.localizedDescription)]
         }
     }
 
@@ -410,8 +410,8 @@ public final class LibraryStore: ObservableObject {
     private func blockPersistence(message: String) {
         isPersistenceBlocked = true
         lastFailures = [ImportFailure(
-            sourceName: "Library",
-            message: "The library could not be opened (\(message)). Changes will not be saved until the problem is fixed."
+            sourceName: String(localized: "Library", bundle: .module),
+            message: String(localized: "The library could not be opened (\(message)). Changes will not be saved until the problem is fixed.", bundle: .module)
         )]
     }
 }

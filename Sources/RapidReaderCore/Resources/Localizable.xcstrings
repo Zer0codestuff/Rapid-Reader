@@ -1,0 +1,226 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ does not contain readable text.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ non contiene testo leggibile."
+          }
+        }
+      }
+    },
+    "%@ is not a valid URL.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ non è un URL valido."
+          }
+        }
+      }
+    },
+    "%lld item(s) could not be read and were skipped. The original file was kept at %@.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elementi non leggibili e saltati: %1$lld. Il file originale è stato conservato in %2$@."
+          }
+        }
+      }
+    },
+    "Article": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Articolo"
+          }
+        }
+      }
+    },
+    "Clipboard": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appunti"
+          }
+        }
+      }
+    },
+    "Clipboard Text": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Testo dagli appunti"
+          }
+        }
+      }
+    },
+    "Could not read %@.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile leggere %@."
+          }
+        }
+      }
+    },
+    "Document": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Documento"
+          }
+        }
+      }
+    },
+    "Library": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Libreria"
+          }
+        }
+      }
+    },
+    "Opening": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inizio"
+          }
+        }
+      }
+    },
+    "Page %lld": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pagina %lld"
+          }
+        }
+      }
+    },
+    "Part %lld": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parte %lld"
+          }
+        }
+      }
+    },
+    "Reading statistics could not be read. The original file was kept at %@.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile leggere le statistiche di lettura. Il file originale è stato conservato in %@."
+          }
+        }
+      }
+    },
+    "Section %lld": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sezione %lld"
+          }
+        }
+      }
+    },
+    "Statistics": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Statistiche"
+          }
+        }
+      }
+    },
+    "Text": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Testo"
+          }
+        }
+      }
+    },
+    "The library could not be opened (%@). Changes will not be saved until the problem is fixed.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile aprire la libreria (%@). Le modifiche non verranno salvate finché il problema non sarà risolto."
+          }
+        }
+      }
+    },
+    "The library could not be read (%@). The original file was kept at %@.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile leggere la libreria (%1$@). Il file originale è stato conservato in %2$@."
+          }
+        }
+      }
+    },
+    "The server returned HTTP %lld.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il server ha risposto con HTTP %lld."
+          }
+        }
+      }
+    },
+    "The text of this document is missing from the library folder.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il testo di questo documento manca dalla cartella della libreria."
+          }
+        }
+      }
+    },
+    "Unsupported format: %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formato non supportato: %@"
+          }
+        }
+      }
+    },
+    "Web Article": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Articolo web"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

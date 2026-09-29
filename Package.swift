@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "RapidReader",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v14)
     ],
@@ -19,7 +20,10 @@ let package = Package(
         .target(
             name: "RapidReaderCore",
             dependencies: ["ZIPFoundation", "SwiftSoup"],
-            path: "Sources/RapidReaderCore"
+            path: "Sources/RapidReaderCore",
+            resources: [
+                .process("Resources")
+            ]
         ),
         .executableTarget(
             name: "RapidReader",

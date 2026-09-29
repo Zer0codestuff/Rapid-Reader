@@ -36,7 +36,7 @@ public enum EPUBParser {
             let entries = navigation.filter { $0.path == itemPath }
             let title = TextProcessor.cleanedTitle(
                 entries.first(where: { $0.fragment == nil })?.title ?? HTMLTextExtractor.title(fromHTML: html),
-                fallback: item.title ?? "Section \(index + 1)"
+                fallback: item.title ?? String(localized: "Section \(index + 1)", bundle: .module)
             )
             sections.append(contentsOf: chapterSections(html: html, title: title, entries: entries))
         }

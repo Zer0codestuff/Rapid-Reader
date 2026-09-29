@@ -22,11 +22,11 @@ public enum PDFTextExtractor {
         chapters.sort { $0.page < $1.page }
         var seen = Set<Int>()
         chapters = chapters.filter { seen.insert($0.page).inserted }
-        if let first = chapters.first, first.page > 0 { chapters.insert((0, "Opening"), at: 0) }
+        if let first = chapters.first, first.page > 0 { chapters.insert((0, String(localized: "Opening", bundle: .module)), at: 0) }
 
         let sections: [BookSection]
         if chapters.isEmpty {
-            sections = pages.enumerated().map { BookSection(title: "Page \($0.offset + 1)", text: $0.element) }
+            sections = pages.enumerated().map { BookSection(title: String(localized: "Page \($0.offset + 1)", bundle: .module), text: $0.element) }
         } else {
             sections = chapters.enumerated().map { index, chapter in
                 let end = index + 1 < chapters.count ? chapters[index + 1].page : pages.count

@@ -54,7 +54,7 @@ public enum TextProcessor {
         while cursor < words.count {
             let end = min(cursor + 1_200, words.count)
             let chunk = words[cursor..<end].joined(separator: " ")
-            sections.append(BookSection(title: "Part \(part)", text: chunk, wordCount: end - cursor))
+            sections.append(BookSection(title: String(localized: "Part \(part)", bundle: .module), text: chunk, wordCount: end - cursor))
             cursor = end
             part += 1
         }

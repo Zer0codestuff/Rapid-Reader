@@ -12,6 +12,8 @@ Rapid Reader is a native macOS app for focused long-form reading. It combines ra
 - Switch to full-text mode whenever you want to browse normally, then click a word to resume from that exact position.
 - Tune speed, font size, focus mode, section navigation, and playback controls from one compact reading surface.
 - Recover gracefully from image-only EPUB cover pages and older library data.
+- Search inside a document, choose a light, dark, or sepia reader, and review reading time and speed in Statistics.
+- Available in English and Italian.
 - Store everything locally in `~/Library/Application Support/Rapid Reader`.
 
 ![Rapid Reader full-text mode](docs/screenshots/rapid-reader-text.png)
@@ -98,6 +100,7 @@ Pushing a tag such as `v1.1.0` runs `.github/workflows/release.yml`, which tests
 - `Space`: play or pause RSVP playback.
 - `Left Arrow` / `Right Arrow`: move backward or forward.
 - `Command-O`: import files.
+- `Command-F`: search in the current document.
 - Section picker: jump to a specific chapter or section.
 - Text mode: click a word to set the resume position.
 

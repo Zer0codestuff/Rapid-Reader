@@ -24,9 +24,9 @@ public enum ReadingFormat: String, Codable, CaseIterable, Sendable {
         case .rtf: "RTF"
         case .html: "HTML"
         case .markdown: "Markdown"
-        case .plainText: "Text"
-        case .webArticle: "Article"
-        case .unknown: "Document"
+        case .plainText: String(localized: "Text", bundle: .module)
+        case .webArticle: String(localized: "Article", bundle: .module)
+        case .unknown: String(localized: "Document", bundle: .module)
         }
     }
 }
