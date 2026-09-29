@@ -7,9 +7,10 @@ struct RapidReaderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        WindowGroup("Rapid Reader") {
+        Window("Rapid Reader", id: "library") {
             ContentView(library: appDelegate.library)
                 .frame(minWidth: 740, minHeight: 560)
+                .modifier(WindowOpenerRegistration(delegate: appDelegate))
         }
         .windowStyle(.titleBar)
         .commands {
@@ -26,6 +27,8 @@ struct RapidReaderApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let library = LibraryStore()
+    /// Reopens the library window after it was closed. Set by the window's content.
+    var openLibraryWindow: (() -> Void)?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.servicesProvider = self
@@ -33,7 +36,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
     }
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { showLibraryWindow() }
+        return true
+    }
+
     func application(_ application: NSApplication, open urls: [URL]) {
+        showLibraryWindow()
         Task { @MainActor in
             library.setDefaultPreferences(ReadingDefaults.preferences())
             await library.importFiles(urls.filter(\.isFileURL))
@@ -52,8 +65,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             library.importClipboardText(text)
         }
-        NSApp.activate(ignoringOtherApps: true)
-        NSApp.windows.first(where: { $0.canBecomeMain })?.makeKeyAndOrderFront(nil)
+        showLibraryWindow()
     }
 
+    private func showLibraryWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        if let window = NSApp.windows.first(where: { $0.canBecomeMain && $0.isVisible }) {
+            window.makeKeyAndOrderFront(nil)
+        } else {
+            openLibraryWindow?()
+        }
+    }
+}
+
+private struct WindowOpenerRegistration: ViewModifier {
+    let delegate: AppDelegate
+    @Environment(\.openWindow) private var openWindow
+
+    func body(content: Content) -> some View {
+        content.onAppear {
+            let openWindow = openWindow
+            delegate.openLibraryWindow = { openWindow(id: "library") }
+        }
+    }
 }

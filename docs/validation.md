@@ -60,3 +60,8 @@
 
 - `swift test`: 34 tests passed. Covered warm-up, long-word scaling, defaults off for older library data, rewind after a playback pause, and no rewind after seeking.
 - Native app with an isolated library: the Reading options popover opens from the reader and shows the three controls.
+
+## Single library window
+
+- Found in native QA: opening a document from Finder while the app ran created a second window with a second reader session on the same library. The app now uses one `Window` scene.
+- Checked with an isolated library: Finder open keeps one window; closing the window keeps the process running; Dock reopen and Finder open both show the window again in the same process.
