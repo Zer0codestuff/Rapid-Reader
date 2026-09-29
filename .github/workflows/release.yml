@@ -37,7 +37,23 @@ jobs:
         run: swift test
 
       - name: Package DMG
+        env:
+          # Repository variable with the base64 EdDSA public key; updates stay disabled without it.
+          SPARKLE_PUBLIC_KEY: ${{ vars.SPARKLE_PUBLIC_KEY }}
         run: ./script/package_dmg.sh "${{ steps.version.outputs.value }}"
+
+      - name: Generate appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [[ -z "$SPARKLE_PRIVATE_KEY" ]]; then
+            echo "SPARKLE_PRIVATE_KEY is not set; skipping appcast."
+            exit 0
+          fi
+          KEY_FILE="$RUNNER_TEMP/sparkle.key"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$KEY_FILE"
+          SPARKLE_PRIVATE_KEY_FILE="$KEY_FILE" ./script/make_appcast.sh "${{ steps.version.outputs.value }}"
+          rm -f "$KEY_FILE"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -50,6 +66,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            "build/package/RapidReader-${{ steps.version.outputs.value }}.dmg" \
+          ASSETS=("build/package/RapidReader-${{ steps.version.outputs.value }}.dmg")
+          if [[ -f build/appcast/appcast.xml ]]; then ASSETS+=(build/appcast/appcast.xml); fi
+          gh release create "$GITHUB_REF_NAME" "${ASSETS[@]}" \
             --draft --title "Rapid Reader ${{ steps.version.outputs.value }}" --generate-notes

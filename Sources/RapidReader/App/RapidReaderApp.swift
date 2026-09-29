@@ -16,10 +16,11 @@ struct RapidReaderApp: App {
         .commands {
             SidebarCommands()
             ImportCommands()
+            UpdateCommands(updater: appDelegate.updater)
         }
 
         Settings {
-            SettingsView()
+            SettingsView(updater: appDelegate.updater)
         }
     }
 }
@@ -27,6 +28,7 @@ struct RapidReaderApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let library = LibraryStore()
+    let updater = AppUpdater()
     /// Reopens the library window after it was closed. Set by the window's content.
     var openLibraryWindow: (() -> Void)?
 

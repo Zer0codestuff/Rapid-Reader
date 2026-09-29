@@ -11,12 +11,17 @@ MIN_SYSTEM_VERSION="14.0"
 CONFIGURATION="${CONFIGURATION:-debug}"
 UNIVERSAL="${UNIVERSAL:-0}"
 
+# Sparkle updates are enabled only when SPARKLE_PUBLIC_KEY (base64 EdDSA public key) is set.
+SPARKLE_PUBLIC_KEY="${SPARKLE_PUBLIC_KEY:-}"
+SPARKLE_FEED_URL="${SPARKLE_FEED_URL:-https://github.com/Zer0codestuff/Rapid-Reader/releases/latest/download/appcast.xml}"
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/$DISPLAY_NAME.app"
 APP_CONTENTS="$APP_BUNDLE/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
 APP_RESOURCES="$APP_CONTENTS/Resources"
+APP_FRAMEWORKS="$APP_CONTENTS/Frameworks"
 APP_BINARY="$APP_MACOS/$APP_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 
@@ -40,6 +45,17 @@ rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_MACOS" "$APP_RESOURCES"
 cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
+
+mkdir -p "$APP_FRAMEWORKS"
+ditto "$BUILD_DIR/Sparkle.framework" "$APP_FRAMEWORKS/Sparkle.framework"
+
+UPDATE_KEYS=""
+if [[ -n "$SPARKLE_PUBLIC_KEY" ]]; then
+  UPDATE_KEYS="  <key>SUFeedURL</key>
+  <string>$SPARKLE_FEED_URL</string>
+  <key>SUPublicEDKey</key>
+  <string>$SPARKLE_PUBLIC_KEY</string>"
+fi
 
 RESOURCE_DIR=""
 if [[ -d "$BUILD_DIR/RapidReader_RapidReader.bundle" ]]; then
@@ -113,6 +129,7 @@ cat >"$INFO_PLIST" <<PLIST
     <key>NSPortName</key><string>Rapid Reader</string>
     <key>NSSendTypes</key><array><string>public.utf8-plain-text</string><string>public.url</string></array>
   </dict></array>
+$UPDATE_KEYS
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
 </dict>

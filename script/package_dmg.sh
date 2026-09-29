@@ -34,7 +34,15 @@ if [[ ! -d "$APP_BUNDLE" ]]; then
 fi
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
-  codesign --force --deep --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP_BUNDLE"
+  # Sign Sparkle's nested code first, as Sparkle documents; --deep would drop the Downloader entitlements.
+  SPARKLE="$APP_BUNDLE/Contents/Frameworks/Sparkle.framework"
+  SIGN=(codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY")
+  "${SIGN[@]}" "$SPARKLE/Versions/B/XPCServices/Installer.xpc"
+  "${SIGN[@]}" --preserve-metadata=entitlements "$SPARKLE/Versions/B/XPCServices/Downloader.xpc"
+  "${SIGN[@]}" "$SPARKLE/Versions/B/Autoupdate"
+  "${SIGN[@]}" "$SPARKLE/Versions/B/Updater.app"
+  "${SIGN[@]}" "$SPARKLE"
+  "${SIGN[@]}" "$APP_BUNDLE"
 else
   codesign --force --deep --sign - "$APP_BUNDLE"
 fi

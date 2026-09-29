@@ -71,6 +71,24 @@ NOTARY_PROFILE=rapid-reader-notary \
 
 `NOTARY_PROFILE` is a keychain profile created with `xcrun notarytool store-credentials`.
 
+## Updates
+
+Rapid Reader uses [Sparkle](https://sparkle-project.org) for updates. The updater and the **Check for Updates…** menu item are enabled only in builds made with `SPARKLE_PUBLIC_KEY`. The app reads `appcast.xml` from the latest GitHub release.
+
+One-time setup by the owner:
+
+1. Run `.build/artifacts/sparkle/Sparkle/bin/generate_keys` after `swift package resolve`. It stores the private key in the login keychain and prints the public key.
+2. Export the private key with `generate_keys -x sparkle-private.key`, keep a backup offline, and add its contents as the `SPARKLE_PRIVATE_KEY` repository secret. Add the public key as the `SPARKLE_PUBLIC_KEY` repository variable.
+
+Local release with updates:
+
+```bash
+SPARKLE_PUBLIC_KEY=<public key> ./script/package_dmg.sh 1.1.0
+./script/make_appcast.sh 1.1.0   # uses the keychain key, or SPARKLE_PRIVATE_KEY_FILE
+```
+
+Upload the DMG and `build/appcast/appcast.xml` to the `v1.1.0` release. The tag workflow does this automatically when the secret and variable exist. Optional release notes go in `docs/release-notes/<version>.html`. Losing the private key means existing installs can no longer verify updates.
+
 ## Releases
 
 Pushing a tag such as `v1.1.0` runs `.github/workflows/release.yml`, which tests, packages the DMG, and attaches it to a draft GitHub release for review. The workflow can also be started manually to build a DMG artifact without creating a release. CI signs ad-hoc; Developer ID signing and notarization currently run locally.

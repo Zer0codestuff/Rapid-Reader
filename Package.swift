@@ -12,7 +12,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
-        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.6.0")
+        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.6.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle.git", from: "2.6.0")
     ],
     targets: [
         .target(
@@ -22,10 +23,14 @@ let package = Package(
         ),
         .executableTarget(
             name: "RapidReader",
-            dependencies: ["RapidReaderCore"],
+            dependencies: ["RapidReaderCore", .product(name: "Sparkle", package: "Sparkle")],
             path: "Sources/RapidReader",
             resources: [
                 .process("Resources")
+            ],
+            linkerSettings: [
+                // Sparkle.framework is embedded in Contents/Frameworks by script/build_and_run.sh.
+                .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])
             ]
         ),
         .testTarget(

@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @ObservedObject var updater: AppUpdater
+
     @AppStorage("readerDefaultWPM") private var defaultWPM = 350
     @AppStorage("readerDefaultFontSize") private var defaultFontSize = 72.0
 
@@ -40,6 +42,13 @@ struct SettingsView: View {
                 Toggle("Pause on long words", isOn: $longWords)
                 Stepper("Rewind on resume: \(rewind) words", value: $rewind, in: 0...20)
                 Text("Defaults apply to newly imported documents.").font(.caption).foregroundStyle(.secondary)
+            }
+            if updater.isAvailable {
+                Section("Updates") {
+                    Toggle("Automatically check for updates", isOn: $updater.automaticallyChecksForUpdates)
+                    Button("Check Now", action: updater.checkForUpdates)
+                        .disabled(!updater.canCheckForUpdates)
+                }
             }
         }
         .formStyle(.grouped)
