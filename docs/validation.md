@@ -45,7 +45,7 @@
 
 ## Defaults and layout
 
-- `swift build` passed. Native screenshot checked with the adaptive controls; no overflow at the observed 1060-point window. The window minimum is reduced to 740x560; resizing through the automation tool did not change the window, so minimum-size QA remains pending.
+- `swift build` passed. Native screenshot checked with the adaptive controls; no overflow at the observed 1060-point window. The window minimum is reduced to 740x560; see "Minimum window size" below for the follow-up check.
 - Native URL sheet accepted typing without a field click. Notes exposes Done and an accessible New note editor.
 
 ## macOS import integration
@@ -100,3 +100,8 @@
 ## English only
 
 - An Italian localization was built and checked, then removed at the owner's request: the project and the app stay entirely in English. The revert restores the previous English-only strings and build script; no `.lproj` or String Catalog ships.
+
+## Minimum window size
+
+- Resizing to 600x400 through System Events stops at 740x612. At that size the header gave the title about 50 points (the position text wrapped one character per line) and the controls panel was cut off at the bottom.
+- The header now switches to a compact variant (no cover, Notes as an icon with an accessibility label) and the RSVP area can shrink to 96 points. Screenshots at 740x612 and 1100x760 checked: title and position on one line, controls fully visible, regular header unchanged at normal size.

@@ -210,13 +210,26 @@ private struct ReaderHeader<Search: View>: View {
     @ViewBuilder let search: () -> Search
 
     var body: some View {
-        HStack(spacing: 16) {
-            BookCoverThumbnail(
-                imageData: item.coverImageData,
-                width: 40,
-                height: 56,
-                fallbackSystemImage: fallbackSystemImage
-            )
+        // Compact windows drop the cover and the Notes title so the document title keeps room.
+        ViewThatFits(in: .horizontal) {
+            content(compact: false)
+            content(compact: true)
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 14)
+        .background(.regularMaterial)
+    }
+
+    private func content(compact: Bool) -> some View {
+        HStack(spacing: compact ? 10 : 16) {
+            if !compact {
+                BookCoverThumbnail(
+                    imageData: item.coverImageData,
+                    width: 40,
+                    height: 56,
+                    fallbackSystemImage: fallbackSystemImage
+                )
+            }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.title)
@@ -227,13 +240,14 @@ private struct ReaderHeader<Search: View>: View {
                     Text(section.title)
                         .lineLimit(1)
                     Text("\(sectionIndex + 1)/\(max(totalSections, 1))")
+                        .fixedSize()
                     Text(item.fractionComplete.percentString)
+                        .fixedSize()
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
-
-            Spacer()
+            .frame(minWidth: compact ? 0 : 180, idealWidth: 180, maxWidth: .infinity, alignment: .leading)
 
             Picker("Mode", selection: $readerMode) {
                 ForEach(ReaderView.ReaderMode.allCases) { mode in
@@ -260,13 +274,15 @@ private struct ReaderHeader<Search: View>: View {
             .accessibilityLabel(item.isFavorite ? "Unfavorite" : "Favorite")
 
             Button(action: onShowNotes) {
-                Label("Notes", systemImage: "note.text")
+                if compact {
+                    Image(systemName: "note.text")
+                } else {
+                    Label("Notes", systemImage: "note.text")
+                }
             }
             .help("Notes")
+            .accessibilityLabel("Notes")
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 14)
-        .background(.regularMaterial)
     }
 
     private var fallbackSystemImage: String {
@@ -303,7 +319,8 @@ private struct RSVPDisplay: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: max(140, fontSize * 2.2))
+        // Shrinks before the controls do when the window is short.
+        .frame(minHeight: 96, idealHeight: max(140, fontSize * 2.2), maxHeight: max(140, fontSize * 2.2))
         .padding(.horizontal, 24)
     }
 
@@ -317,7 +334,7 @@ private struct RSVPDisplay: View {
                 .fill(Color.readerAmber.opacity(0.58))
                 .frame(width: 2, height: 20)
         }
-        .frame(height: max(132, fontSize * 1.8))
+        .frame(maxHeight: max(132, fontSize * 1.8))
     }
 
     private func pivotText(for word: String) -> Text {
