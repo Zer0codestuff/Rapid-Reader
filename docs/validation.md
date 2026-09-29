@@ -16,3 +16,8 @@
 
 - `swift build` passed. In the native app with an isolated library, typing `Reader`, pressing Left twice, and typing `X` produced `ReadXer`; the reader remained at word 0.
 - Playback buttons now expose Play/Pause, Back, Forward, and Favorite labels in the accessibility tree.
+
+## Library deletion
+
+- `swift test`: 21 tests passed, including content removal and selection persistence. `swift build` passed for the context menu, Delete command, and confirmation dialog.
+- Deletion now writes the index before deleting document files.

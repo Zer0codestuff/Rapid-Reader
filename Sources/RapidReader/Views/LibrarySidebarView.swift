@@ -11,6 +11,8 @@ struct LibrarySidebarView: View {
     let onDelete: (IndexSet) -> Void
     let onToggleFavorite: (UUID) -> Void
 
+    @State private var pendingDeletion: UUID?
+
     var body: some View {
         VStack(spacing: 0) {
             List(selection: $selectedID) {
@@ -22,11 +24,15 @@ struct LibrarySidebarView: View {
                                 Button(item.isFavorite ? "Unfavorite" : "Favorite") {
                                     onToggleFavorite(item.id)
                                 }
+                                Button("Delete", role: .destructive) { pendingDeletion = item.id }
                             }
                     }
-                    .onDelete(perform: onDelete)
+                    .onDelete { offsets in
+                        if let index = offsets.first, items.indices.contains(index) { pendingDeletion = items[index].id }
+                    }
                 }
             }
+            .onDeleteCommand { pendingDeletion = selectedID }
             .listStyle(.sidebar)
             .searchable(text: $searchText, placement: .sidebar, prompt: "Search")
 
@@ -52,7 +58,21 @@ struct LibrarySidebarView: View {
             }
             .padding(10)
         }
-        .navigationSplitViewColumnWidth(min: 260, ideal: 300)
+        .navigationSplitViewColumnWidth(min: 220, ideal: 280)
+        .alert("Delete document?", isPresented: Binding(
+            get: { pendingDeletion != nil },
+            set: { if !$0 { pendingDeletion = nil } }
+        )) {
+            Button("Cancel", role: .cancel) { pendingDeletion = nil }
+            Button("Delete", role: .destructive) {
+                if let id = pendingDeletion, let index = items.firstIndex(where: { $0.id == id }) {
+                    onDelete(IndexSet(integer: index))
+                }
+                pendingDeletion = nil
+            }
+        } message: {
+            Text("This removes the document, reading progress, and notes from this library. The original file is kept.")
+        }
     }
 }
 

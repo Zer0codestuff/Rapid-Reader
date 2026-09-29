@@ -248,15 +248,23 @@ public final class LibraryStore: ObservableObject {
     }
 
     public func deleteItems(at offsets: IndexSet, from visibleItems: [LibraryItem]) {
-        let ids = offsets.map { visibleItems[$0].id }
-        items.removeAll { ids.contains($0.id) }
+        guard !isPersistenceBlocked else { return }
+        let ids = Set(offsets.compactMap { visibleItems.indices.contains($0) ? visibleItems[$0].id : nil })
+        let remaining = items.filter { !ids.contains($0.id) }
+        // Commit the index before removing content, so a failed save cannot orphan books.
+        do {
+            try persistence.writeIndex(remaining)
+        } catch {
+            recordFailure(sourceName: "Library", message: error.localizedDescription)
+            return
+        }
+        pendingSave?.cancel()
+        pendingSave = nil
+        items = remaining
         if let selectedID, ids.contains(selectedID) {
             self.selectedID = items.sortedForLibrary.first?.id
         }
-        saveIndex()
-        if !isPersistenceBlocked {
-            ids.forEach(persistence.deleteContent)
-        }
+        ids.forEach(persistence.deleteContent)
     }
 
     public func select(_ id: UUID?) {
