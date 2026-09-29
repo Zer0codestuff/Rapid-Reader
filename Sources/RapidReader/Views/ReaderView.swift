@@ -128,6 +128,9 @@ struct ReaderView: View {
         .sheet(isPresented: $showingNotes) {
             NotesSheet(
                 notes: item.notes,
+                sectionTitle: { index in
+                    item.sections.indices.contains(index) ? item.sections[index].title : item.title
+                },
                 noteText: $noteText,
                 onAdd: {
                     library.addNote(for: item.id, text: noteText)
