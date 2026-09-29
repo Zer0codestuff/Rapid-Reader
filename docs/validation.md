@@ -26,3 +26,7 @@
 
 - Existing 21 tests and three new extraction tests pass after correcting a test expectation to retain paragraph breaks.
 - Covered nested article markup, Wikipedia navigation, entities, inline emphasis, and paragraph boundaries. No JavaScript or external HTML resources are loaded.
+
+## EPUB chapters
+
+- Four import regressions and two navigation fixtures pass. Checked EPUB 3 nav and EPUB 2 NCX chapter anchors, nonlinear spine entries, and existing cover extraction.

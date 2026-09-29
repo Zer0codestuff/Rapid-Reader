@@ -1,5 +1,6 @@
 import Foundation
 import ZIPFoundation
+import SwiftSoup
 
 public enum EPUBParser {
     public static func importEPUB(at url: URL) throws -> ImportedDocument {
@@ -19,6 +20,7 @@ public enum EPUBParser {
             package.manifest[idRef]
         }
 
+        let navigation = navigationEntries(package: package, archive: archive, opfDirectory: opfDirectory)
         var sections: [BookSection] = []
         for (index, item) in spineItems.enumerated() {
             guard item.mediaType.contains("html") || item.href.lowercased().hasSuffix(".xhtml") || item.href.lowercased().hasSuffix(".html") else {
@@ -30,16 +32,13 @@ public enum EPUBParser {
                 continue
             }
 
-            let html = String(data: htmlData, encoding: .utf8) ?? ""
+            let html = HTMLTextExtractor.decode(htmlData)
+            let entries = navigation.filter { $0.path == itemPath }
             let title = TextProcessor.cleanedTitle(
-                HTMLTextExtractor.title(fromHTML: html),
+                entries.first(where: { $0.fragment == nil })?.title ?? HTMLTextExtractor.title(fromHTML: html),
                 fallback: item.title ?? "Section \(index + 1)"
             )
-            let text = HTMLTextExtractor.plainText(from: htmlData)
-            let section = BookSection(title: title, text: text)
-            if section.wordCount > 0 {
-                sections.append(section)
-            }
+            sections.append(contentsOf: chapterSections(html: html, title: title, entries: entries))
         }
 
         guard !sections.isEmpty else {
@@ -57,6 +56,83 @@ public enum EPUBParser {
             sections: sections,
             coverImageData: coverImageData
         )
+    }
+
+    private struct NavigationEntry {
+        let path: String
+        let fragment: String?
+        let title: String
+    }
+
+    private static func navigationEntries(package: OPFPackage, archive: Archive, opfDirectory: String) -> [NavigationEntry] {
+        let nav = package.manifest.values.first { $0.properties.contains("nav") }
+        let ncx = package.manifest.values.first { $0.mediaType == "application/x-dtbncx+xml" }
+        for item in [nav, ncx].compactMap({ $0 }) {
+            let path = resolvedArchivePath(baseDirectory: opfDirectory, href: item.href)
+            guard let data = try? dataFromArchive(archive, path: path),
+                  let document = try? SwiftSoup.parse(HTMLTextExtractor.decode(data), "", Parser.xmlParser()) else { continue }
+            var links: [(String, String)] = []
+            if item.properties.contains("nav") {
+                let navs = (try? document.select("nav").array()) ?? []
+                let toc = navs.first { ((try? $0.attr("epub:type")) ?? "").split(separator: " ").contains("toc") }
+                    ?? navs.first { ((try? $0.attr("role")) ?? "") == "doc-toc" }
+                if let toc {
+                    links = ((try? toc.select("a[href]").array()) ?? []).compactMap {
+                        guard let href = try? $0.attr("href"), let title = try? $0.text() else { return nil }
+                        return (href, title)
+                    }
+                }
+            } else {
+                links = ((try? document.select("navPoint").array()) ?? []).compactMap {
+                    guard let href = try? $0.select("content").first()?.attr("src"),
+                          let title = try? $0.select("navLabel").first()?.text() else { return nil }
+                    return (href, title)
+                }
+            }
+            let entries = links.compactMap { href, title -> NavigationEntry? in
+                guard !title.isEmpty else { return nil }
+                let parts = href.split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false)
+                let file = String(parts[0])
+                let target = file.isEmpty ? path : resolvedArchivePath(baseDirectory: (path as NSString).deletingLastPathComponent, href: file)
+                let fragment = parts.count > 1 ? (String(parts[1]).removingPercentEncoding ?? String(parts[1])) : nil
+                return NavigationEntry(path: target, fragment: fragment, title: title)
+            }
+            if !entries.isEmpty { return entries }
+        }
+        return []
+    }
+
+    private static func chapterSections(html: String, title: String, entries: [NavigationEntry]) -> [BookSection] {
+        guard let document = try? SwiftSoup.parse(html) else { return [] }
+        _ = try? document.select("script, style, nav, #pg-header, #pg-footer, .pg-boilerplate").remove()
+        var titles: [String: String] = [:]
+        for entry in entries {
+            if let fragment = entry.fragment, titles[fragment] == nil { titles[fragment] = entry.title }
+        }
+        var sections: [BookSection] = []
+        var currentTitle = title
+        var output = ""
+        func flush() {
+            let text = TextProcessor.normalizedText(output)
+            let section = BookSection(title: currentTitle, text: text)
+            if section.wordCount > 0 { sections.append(section) }
+            output = ""
+        }
+        func visit(_ node: Node) {
+            if let text = node as? TextNode { output += text.getWholeText(); return }
+            let element = node as? Element
+            let name = element?.tagName() ?? ""
+            let id = (try? element?.attr("id")) ?? ""
+            if let heading = titles[id] { flush(); currentTitle = heading }
+            let block = ["p", "div", "section", "li", "br", "h1", "h2", "h3", "h4", "blockquote", "tr"].contains(name)
+            if block { output += "\n" }
+            for child in node.getChildNodes() { visit(child) }
+            if block { output += "\n" }
+            if name == "td" { output += " " }
+        }
+        visit(document.body() ?? document)
+        flush()
+        return sections
     }
 
     private static func dataFromArchive(_ archive: Archive, path: String) throws -> Data {
@@ -210,7 +286,7 @@ private final class OPFDelegate: NSObject, XMLParserDelegate {
             )
         }
 
-        if localName == "itemref", let idRef = attributeDict["idref"] {
+        if localName == "itemref", attributeDict["linear"] != "no", let idRef = attributeDict["idref"] {
             spine.append(idRef)
         }
 
