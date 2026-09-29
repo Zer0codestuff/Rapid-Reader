@@ -136,8 +136,15 @@ struct ReaderView: View {
             session.onProgressChange = { section, word in
                 library.updateProgress(for: item.id, sectionIndex: section, wordIndex: word)
             }
+            session.onReadingSegment = { words, seconds in
+                library.recordReading(words: words, seconds: seconds)
+            }
         }
         .onDisappear {
+            session.pause()
+            library.flushPendingChanges()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
             session.pause()
             library.flushPendingChanges()
         }

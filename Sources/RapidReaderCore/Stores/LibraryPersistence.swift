@@ -6,6 +6,7 @@ import Foundation
 ///   It is rewritten often, so it never contains document text or cover art.
 /// - `Documents/<id>.json` holds the sections of one document and is written once.
 /// - `Documents/<id>.cover` holds the raw cover image bytes.
+/// - `statistics.json` holds reading time and words per day.
 ///
 /// Version 1 libraries stored everything inside a single `library.json` array and are
 /// migrated transparently by `LibraryStore`.
@@ -18,6 +19,7 @@ struct LibraryPersistence {
     var indexURL: URL { rootURL.appendingPathComponent("library.json") }
     var documentsURL: URL { rootURL.appendingPathComponent("Documents", isDirectory: true) }
     var backupsURL: URL { rootURL.appendingPathComponent("Backups", isDirectory: true) }
+    var statisticsURL: URL { rootURL.appendingPathComponent("statistics.json") }
 
     enum LoadedIndex {
         case missing
@@ -78,13 +80,24 @@ struct LibraryPersistence {
         return (content.sections, try? Data(contentsOf: coverURL(for: id)))
     }
 
+    /// Returns empty statistics when the file does not exist yet.
+    func readStatistics() throws -> ReadingStatistics {
+        guard fileManager.fileExists(atPath: statisticsURL.path) else { return ReadingStatistics() }
+        return try JSONDecoder.readerDecoder.decode(ReadingStatistics.self, from: Data(contentsOf: statisticsURL))
+    }
+
+    func writeStatistics(_ statistics: ReadingStatistics) throws {
+        try JSONEncoder.readerEncoder.encode(statistics).write(to: statisticsURL, options: [.atomic])
+    }
+
     func deleteContent(for id: UUID) {
         try? fileManager.removeItem(at: contentURL(for: id))
         try? fileManager.removeItem(at: coverURL(for: id))
     }
 
     @discardableResult
-    func backupIndex(named name: String, move: Bool, timestamped: Bool = true) -> URL? {
+    func backupIndex(named name: String, move: Bool, timestamped: Bool = true, source: URL? = nil) -> URL? {
+        let source = source ?? indexURL
         do {
             try fileManager.createDirectory(at: backupsURL, withIntermediateDirectories: true)
             let suffix = timestamped ? "-" + Self.backupTimestamp() : ""
@@ -93,9 +106,9 @@ struct LibraryPersistence {
                 try fileManager.removeItem(at: destination)
             }
             if move {
-                try fileManager.moveItem(at: indexURL, to: destination)
+                try fileManager.moveItem(at: source, to: destination)
             } else {
-                try fileManager.copyItem(at: indexURL, to: destination)
+                try fileManager.copyItem(at: source, to: destination)
             }
             return destination
         } catch {

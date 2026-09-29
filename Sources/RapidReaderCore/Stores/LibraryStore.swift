@@ -12,6 +12,7 @@ public final class LibraryStore: ObservableObject {
     @Published public private(set) var items: [LibraryItem] = []
     @Published public var selectedID: UUID?
     @Published public private(set) var lastFailures: [ImportFailure] = []
+    @Published public private(set) var statistics = ReadingStatistics()
 
     public let rootURL: URL
     private let persistence: LibraryPersistence
@@ -19,6 +20,7 @@ public final class LibraryStore: ObservableObject {
     private let fileManager: FileManager
     private var defaultPreferences: ReadingPreferences
     private var isPersistenceBlocked = false
+    private var isStatisticsBlocked = false
     private var pendingSave: Task<Void, Never>?
     private let saveDelay: Duration
 
@@ -36,6 +38,7 @@ public final class LibraryStore: ObservableObject {
         self.defaultPreferences = defaultPreferences
         self.saveDelay = saveDelay
         load()
+        loadStatistics()
     }
 
     public static func defaultRootURL() -> URL {
@@ -155,6 +158,34 @@ public final class LibraryStore: ObservableObject {
         }
         if needsIndexSave {
             saveIndex()
+        }
+    }
+
+    /// Adds a playback segment to the reading statistics and saves them.
+    public func recordReading(words: Int, seconds: TimeInterval, endingAt date: Date = Date()) {
+        let before = statistics
+        statistics.record(words: words, seconds: seconds, endingAt: date)
+        guard statistics != before, !isPersistenceBlocked, !isStatisticsBlocked else { return }
+        do {
+            try persistence.writeStatistics(statistics)
+        } catch {
+            lastFailures = [ImportFailure(sourceName: "Statistics", message: error.localizedDescription)]
+        }
+    }
+
+    private func loadStatistics() {
+        do {
+            statistics = try persistence.readStatistics()
+        } catch {
+            // Keep unreadable statistics aside instead of overwriting them.
+            if let backup = persistence.backupIndex(named: "statistics-unreadable", move: true, source: persistence.statisticsURL) {
+                lastFailures.append(ImportFailure(
+                    sourceName: "Statistics",
+                    message: "Reading statistics could not be read. The original file was kept at \(backup.path)."
+                ))
+            } else {
+                isStatisticsBlocked = true
+            }
         }
     }
 

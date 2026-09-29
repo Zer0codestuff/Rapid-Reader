@@ -75,3 +75,10 @@
 
 - `swift build` passed. Native screenshots with an isolated library checked System, Light, Dark, and Sepia in RSVP mode, and Sepia and Dark in text mode (text color and current-word highlight). The setting was restored to System after QA.
 - The progress slider drew one tick per word, which formed a dense striped bar that stood out on light backgrounds. It now uses a continuous track; the value is still rounded to a word index.
+
+## Reading statistics
+
+- `swift test`: 41 tests passed. Covered per-day grouping across local midnight, ignored empty or sub-second segments, summaries, persistence, keeping an unreadable file aside, and session word counting.
+- Native app with an isolated library: 4 s of playback at 350 WPM recorded 21 words (about 304 WPM measured, consistent with punctuation pauses). The sheet was checked with seeded history: tiles, 14-day chart, hover tooltip kept inside the plot, day labels aligned under their bars.
+- Chart colors: the brand amber #F29E38 failed contrast on light (2.1:1) and the lightness band on dark in `validate_palette.js`; #C2700F (light) and #CC7A18 (dark) pass both.
+- Quitting during playback now pauses the session and flushes progress before exit, so the last run and position are saved.

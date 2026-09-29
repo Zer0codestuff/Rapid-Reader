@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var showingFileImporter = false
     @State private var showingURLImporter = false
     @State private var showingFailureAlert = false
+    @State private var showingStatistics = false
 
     private var visibleItems: [RapidReaderCore.LibraryItem] {
         let sorted = library.items.sortedForLibrary
@@ -67,6 +68,13 @@ struct ContentView: View {
         .toolbar {
             ToolbarItemGroup {
                 Button {
+                    showingStatistics = true
+                } label: {
+                    Label("Statistics", systemImage: "chart.bar.xaxis")
+                }
+                .help("Reading statistics")
+
+                Button {
                     showingFileImporter = true
                 } label: {
                     Label("Import", systemImage: "square.and.arrow.down")
@@ -97,6 +105,9 @@ struct ContentView: View {
                     showingFailureAlert = true
                 }
             }
+        }
+        .sheet(isPresented: $showingStatistics) {
+            StatisticsView(statistics: library.statistics)
         }
         .sheet(isPresented: $showingURLImporter) {
             URLImportSheet { url in

@@ -27,8 +27,13 @@ public final class ReaderSession: ObservableObject {
     /// Called with `(sectionIndex, wordIndex)` whenever progress should be persisted.
     public var onProgressChange: ((Int, Int) -> Void)?
 
+    /// Called with `(words, seconds)` for each playback run when it stops.
+    /// Words count once their display time has fully elapsed.
+    public var onReadingSegment: ((Int, TimeInterval) -> Void)?
+
     private var playbackStartedAt: ContinuousClock.Instant?
     private var shouldRewindOnResume = false
+    private var segmentWords = 0
     private var tokenCache: [Int: [String]] = [:]
     private var playbackTask: Task<Void, Never>?
     private var lastProgressReport = ContinuousClock.now
@@ -118,6 +123,7 @@ public final class ReaderSession: ObservableObject {
         }
         guard !words.isEmpty else { return }
         playbackStartedAt = clock.now
+        segmentWords = 0
         isPlaying = true
         playbackTask?.cancel()
         let clock = self.clock
@@ -132,14 +138,21 @@ public final class ReaderSession: ObservableObject {
                 do {
                     try await clock.sleep(until: deadline, tolerance: .milliseconds(2))
                 } catch { return }
-                guard !Task.isCancelled, self?.isPlaying == true else { return }
-                if self?.step(forward: true) == false { self?.pause() }
+                guard !Task.isCancelled, let self, self.isPlaying else { return }
+                self.segmentWords += self.displayWords.count
+                if !self.step(forward: true) { self.pause() }
             }
         }
     }
 
     public func pause() {
-        if isPlaying { shouldRewindOnResume = true }
+        if isPlaying {
+            shouldRewindOnResume = true
+            if let start = playbackStartedAt {
+                onReadingSegment?(segmentWords, start.duration(to: clock.now).secondsValue)
+            }
+            segmentWords = 0
+        }
         isPlaying = false
         playbackTask?.cancel()
         playbackTask = nil
