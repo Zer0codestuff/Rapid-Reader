@@ -30,3 +30,7 @@
 ## EPUB chapters
 
 - Four import regressions and two navigation fixtures pass. Checked EPUB 3 nav and EPUB 2 NCX chapter anchors, nonlinear spine entries, and existing cover extraction.
+
+## PDF import
+
+- Two PDF tests passed: repeated margins/dehyphenation and a generated two-page PDF with a real outline. Outline boundaries are at page granularity; pages containing multiple outline destinations remain one section.
