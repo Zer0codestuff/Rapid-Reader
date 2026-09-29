@@ -76,6 +76,15 @@ struct ReaderView: View {
                     .accessibilityIdentifier("full-text-reader")
                 }
 
+                HStack {
+                    Text("Section: \(session.remainingSectionSeconds.readerDuration)")
+                    Spacer()
+                    Text("Book: \(session.remainingBookSeconds.readerDuration)")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .help("Estimated time remaining at the selected speed, before optional pauses.")
+
                 ReaderControls(
                     isPlaying: session.isPlaying,
                     sectionIndex: Binding(

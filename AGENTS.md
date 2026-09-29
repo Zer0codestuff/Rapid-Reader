@@ -14,6 +14,7 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 
 - Completed before this handoff: tolerant library decoding and backups, per-document content files, debounced metadata saves. Commits `b228b80` and `bff0b5f` are on the remote.
 - RSVP now uses `ReaderSession`, cached section tokens, absolute clock deadlines, and throttled progress reports. Playback stops when leaving a book. The inherited incomplete file is preserved in ignored `build/checkpoints/`.
+- Reader shows remaining section/book time based on word count and selected WPM, explicitly excluding optional pauses.
 - AppDelegate owns one shared library. File menu commands, URL/file drops, Finder document opening, and a Read in Rapid Reader macOS Service route through the same importer. The Service may require enabling in macOS Keyboard Shortcuts after installation.
 - All six original preferences have defaults for new documents. Font size is consistently 42...110. Controls wrap in an adaptive grid; minimum window size is 740x560.
 - Notes support edit, delete, and jump with a visible Done button. URL import focuses its field and guards repeated submission. Recent reads show Now; playback controls have accessibility labels.
@@ -25,7 +26,7 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 - Reader arrow/space shortcuts are scoped to the active reader window and excluded from text fields, controls, and sheets. Native search-field cursor behavior was checked.
 - RSVP and text mode share normalized UTF-16 token ranges; text mode caches its document and updates only the current highlight.
 - Validation: 21 tests pass, including playback timing and session lifetime. On this Mac, 20 lookups of 28,000 words fell from 416 ms with repeated tokenization to 0.013 ms with cached tokens. This is a core benchmark, not whole-app CPU.
-- Remaining authorized work: Italian localization; release/universal packaging and CI; update support; remaining-time estimates, optional pacing and rewind, reading statistics, text search, and themes.
+- Remaining authorized work: Italian localization; release/universal packaging and CI; update support; optional pacing and rewind, reading statistics, text search, and themes.
 - Developer ID signing, notarization, and signed update publication require the owner's credentials. Implement and verify the local workflow first, then report any missing setup.
 
 ## Constraints

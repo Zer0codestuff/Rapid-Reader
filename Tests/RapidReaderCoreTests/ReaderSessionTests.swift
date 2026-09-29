@@ -25,6 +25,16 @@ final class ReaderSessionTests: XCTestCase {
         session.pause()
     }
 
+    @MainActor
+    func testRemainingTimeUpdatesAfterSeekAndSpeedChange() {
+        let session = ReaderSession(sections: [BookSection(title: "One", text: "A B C D"), BookSection(title: "Two", text: "E F")], preferences: ReadingPreferences(wordsPerMinute: 600))
+        session.setWordIndex(2)
+        XCTAssertEqual(session.remainingSectionSeconds, 0.2, accuracy: 0.001)
+        XCTAssertEqual(session.remainingBookSeconds, 0.4, accuracy: 0.001)
+        session.preferences.wordsPerMinute = 300
+        XCTAssertEqual(session.remainingBookSeconds, 0.8, accuracy: 0.001)
+    }
+
     func testTimingUsesDisplayedChunkAndItsPunctuation() {
         let preferences = ReadingPreferences(wordsPerMinute: 600, chunkSize: 4)
         XCTAssertEqual(RSVPTiming.displayDuration(for: ["last."], preferences: preferences), 0.18, accuracy: 0.0001)

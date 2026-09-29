@@ -33,3 +33,13 @@ extension Double {
         return formatter.string(from: NSNumber(value: self)) ?? "0%"
     }
 }
+
+extension TimeInterval {
+    var readerDuration: String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = self >= 3600 ? [.hour, .minute] : [.minute, .second]
+        formatter.unitsStyle = .abbreviated
+        formatter.maximumUnitCount = 2
+        return formatter.string(from: max(0, self)) ?? "0s"
+    }
+}

@@ -73,6 +73,15 @@ public final class ReaderSession: ObservableObject {
         return Array(words[start..<end])
     }
 
+    public var remainingSectionSeconds: TimeInterval {
+        Double(max(0, words.count - wordIndex)) * 60 / Double(preferences.wordsPerMinute)
+    }
+
+    public var remainingBookSeconds: TimeInterval {
+        let laterWords = sections.dropFirst(sectionIndex + 1).reduce(0) { $0 + $1.wordCount }
+        return remainingSectionSeconds + Double(laterWords) * 60 / Double(preferences.wordsPerMinute)
+    }
+
     public var isAtEnd: Bool {
         sectionIndex >= sections.count - 1 && wordIndex >= words.count
     }

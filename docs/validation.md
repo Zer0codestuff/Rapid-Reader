@@ -51,3 +51,7 @@
 ## macOS import integration
 
 - `swift build` and shell syntax checks pass. Finder document types and the text/URL Service are declared in the app bundle. End-to-end Finder and Services registration checks remain part of final bundle QA.
+
+## Remaining time
+
+- Six reader session tests passed. Estimates update after seeking and changing WPM without re-tokenizing the book.
