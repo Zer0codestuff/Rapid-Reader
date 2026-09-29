@@ -159,40 +159,27 @@ public final class LibraryStore: ObservableObject {
     }
 
     public func importFiles(_ urls: [URL]) async {
-        var importedItems: [LibraryItem] = []
         var failures: [ImportFailure] = []
-
         for url in urls {
             do {
                 let document = try await importer.importFile(at: url)
-                importedItems.append(item(from: document))
+                try insertDocument(document)
             } catch {
                 failures.append(ImportFailure(sourceName: url.lastPathComponent, message: error.localizedDescription))
             }
-        }
-
-        if !importedItems.isEmpty {
-            importedItems.forEach(writeContent)
-            items.insert(contentsOf: importedItems, at: 0)
-            selectedID = importedItems.first?.id
-            saveIndex()
         }
         lastFailures = failures
     }
 
     public func setDefaultPreferences(_ preferences: ReadingPreferences) {
-        defaultPreferences = preferences
+        defaultPreferences = preferences.clamped()
     }
 
     public func importArticle(from url: URL) async {
         do {
             let document = try await importer.importArticle(from: url)
-            let newItem = item(from: document)
-            writeContent(of: newItem)
-            items.insert(newItem, at: 0)
-            selectedID = newItem.id
+            try insertDocument(document)
             lastFailures = []
-            saveIndex()
         } catch {
             lastFailures = [ImportFailure(sourceName: url.absoluteString, message: error.localizedDescription)]
         }
@@ -200,16 +187,26 @@ public final class LibraryStore: ObservableObject {
 
     public func importClipboardText(_ text: String) {
         do {
-            let document = try importer.importClipboardText(text)
-            let newItem = item(from: document)
-            writeContent(of: newItem)
-            items.insert(newItem, at: 0)
-            selectedID = newItem.id
+            try insertDocument(importer.importClipboardText(text))
             lastFailures = []
-            saveIndex()
         } catch {
             lastFailures = [ImportFailure(sourceName: "Clipboard", message: error.localizedDescription)]
         }
+    }
+
+    private func insertDocument(_ document: ImportedDocument) throws {
+        let text = document.sections.map(\.text)
+        if let existing = items.first(where: { $0.sections.map(\.text) == text }) {
+            selectedID = existing.id
+            return
+        }
+        guard !isPersistenceBlocked else { throw CocoaError(.fileWriteNoPermission) }
+        let newItem = item(from: document)
+        try persistence.writeContent(of: newItem)
+        let updated = [newItem] + items
+        try persistence.writeIndex(updated)
+        items = updated
+        selectedID = newItem.id
     }
 
     public func updateProgress(for id: UUID, sectionIndex: Int, wordIndex: Int) {

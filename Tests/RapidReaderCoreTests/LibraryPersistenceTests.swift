@@ -98,7 +98,7 @@ final class LibraryStorageLayoutTests: XCTestCase {
 
     func testIndexDoesNotContainDocumentTextOrCovers() throws {
         let store = LibraryStore(rootURL: root)
-        store.importClipboardText("A very distinctive sentence lives only in the content file.")
+        store.importClipboardText("A title\nA very distinctive sentence lives only in the content file.")
 
         let index = try String(contentsOf: root.appendingPathComponent("library.json"), encoding: .utf8)
         XCTAssertTrue(index.contains("\"schemaVersion\" : 2"))
@@ -107,7 +107,7 @@ final class LibraryStorageLayoutTests: XCTestCase {
         let reloaded = LibraryStore(rootURL: root)
         XCTAssertEqual(
             reloaded.items.first?.sections.first?.text,
-            "A very distinctive sentence lives only in the content file."
+            "A title\nA very distinctive sentence lives only in the content file."
         )
     }
 

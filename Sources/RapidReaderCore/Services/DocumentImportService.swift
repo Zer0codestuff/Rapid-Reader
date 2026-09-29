@@ -75,14 +75,16 @@ public final class DocumentImportService: Sendable {
 
     public func importClipboardText(_ text: String) throws -> ImportedDocument {
         let normalized = TextProcessor.normalizedText(text)
-        guard !normalized.isEmpty else {
+        guard !TextProcessor.tokenize(normalized).isEmpty else {
             throw DocumentImportError.emptyDocument("Clipboard")
         }
+        let firstLine = normalized.components(separatedBy: .newlines).first ?? "Clipboard Text"
+        let title = String(firstLine.replacingOccurrences(of: #"^#{1,6}\s*"#, with: "", options: .regularExpression).prefix(80))
         return ImportedDocument(
-            title: "Clipboard Text",
+            title: title,
             sourceName: "Clipboard",
             format: .plainText,
-            sections: TextProcessor.sections(from: normalized, fallbackTitle: "Clipboard Text")
+            sections: TextProcessor.sections(from: normalized, fallbackTitle: title)
         )
     }
 
