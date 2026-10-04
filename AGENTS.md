@@ -34,6 +34,7 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 - Validation: 41 tests pass, including playback timing and session lifetime. On this Mac, 20 lookups of 28,000 words fell from 416 ms with repeated tokenization to 0.013 ms with cached tokens. This is a core benchmark, not whole-app CPU.
 - All authorized points from the source thread are implemented, except Italian localization, which the owner cancelled on 2026-09-29 (see Constraints). New ideas need approval.
 - Redesign (branch `redesign`): a "Quiet reader" UI. The RSVP stage has a theme background, amber glow, pivot letter on the focus line, and a floating glass control capsule that hides 2.2 s after playback starts and returns on mouse move; Up/Down change speed with a HUD. `Support/Glass.swift` gates `glassEffect` and `.glass` button styles on macOS 26 and falls back to `.regularMaterial`. Library, notes, statistics, article import, document search, and settings share the same rounded fields, amber focus rings, and glass buttons. The app icon is the "focus point" mark built from `Icon/AppIcon.icon` with `Icon/build_icon.sh` (actool compiles `Assets.car`; `AppIcon.icns` is the fallback). Nothing was changed in storage, preferences keys, or import formats.
+- Licensing and discoverability (2026-10-04, on `main` at the owner's request): the repository is MIT licensed (`LICENSE`, copyright Gabriele Monni). README opens with "free, open-source", has a `How It Compares` table against Outread and Spreeder built only from their websites, and a `License` section. The GitHub description uses the same wording so search engines and AI agents match queries such as "free open source speed reader for Mac". Recheck the competitor facts before editing that table.
 - Developer ID signing, notarization, and signed update publication require the owner's credentials. Implement and verify the local workflow first, then report any missing setup.
 
 ## Constraints
@@ -47,3 +48,4 @@ Keep the existing amber identity, covers, import formats, text-mode word selecti
 - Do not introduce cloud storage, telemetry, decorative UI, or unapproved product features.
 - Do not use em dashes in agent-written content.
 - Do not claim Intel, VoiceOver, notarization, or update installation was tested unless it was actually checked.
+- Do not state prices or features of other apps in the README without checking their own websites first.

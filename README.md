@@ -1,6 +1,6 @@
 # Rapid Reader
 
-Rapid Reader 2.0 is a native macOS app for focused long-form reading, redesigned around a quiet stage, Liquid Glass controls, and a new focus-point icon. It combines rapid serial visual presentation (RSVP) with a normal full-text reader, so you can move quickly through books and articles while still being able to inspect the original text and resume from any word.
+Rapid Reader 2.0 is a free, open-source native macOS app for focused long-form reading, redesigned around a quiet stage, Liquid Glass controls, and a new focus-point icon. It combines rapid serial visual presentation (RSVP) with a normal full-text reader, so you can move quickly through books and articles while still being able to inspect the original text and resume from any word.
 
 ![Rapid Reader RSVP mode](docs/screenshots/rapid-reader-rsvp.png)
 
@@ -28,6 +28,22 @@ The latest DMG is attached to the GitHub release for this repository.
 4. Launch Rapid Reader.
 
 The DMG contains a universal app for Apple Silicon and Intel Macs. Unless a release says it is notarized, the app is ad-hoc signed: if macOS blocks the first launch, open **System Settings -> Privacy & Security** and allow the app after your first launch attempt.
+
+## How It Compares
+
+Rapid Reader is for reading on a Mac with local files and no account. Two established speed readers for comparison:
+
+| | Rapid Reader | Outread | Spreeder |
+| --- | --- | --- | --- |
+| Platforms | macOS 14 or later | iOS, iPadOS, macOS | Web, Mac, Windows, iOS, Android, Chrome OS |
+| Price | Free | Commercial app | Commercial license, with a free web app |
+| Open source | Yes, MIT | No | No |
+| Imports | EPUB, PDF, DOCX, RTF, HTML, Markdown, plain text, pasted text, web articles | DRM-free EPUB, PDF, DOC, RTF, TXT, web articles | 52 file and ebook formats |
+| Reading modes | RSVP and full text, with click-to-resume | RSVP and a guided highlighter | RSVP |
+
+Outread and Spreeder also run on phones and tablets. Outread includes reading exercises, and Spreeder adds AI summaries and a cloud profile. Rapid Reader is Mac only, keeps its library in a local folder, and does none of that.
+
+Details for the other apps come from the [Outread](https://outreadapp.com/) and [Spreeder](https://www.spreeder.com/) websites, checked in October 2026.
 
 ## Build From Source
 
@@ -118,3 +134,7 @@ The project includes regression tests for:
 - Markdown section splitting.
 - Reading progress and preference persistence.
 - RSVP pivot-letter calculation.
+
+## License
+
+Rapid Reader is released under the [MIT License](LICENSE). ZIPFoundation, SwiftSoup and Sparkle keep their own licenses.
