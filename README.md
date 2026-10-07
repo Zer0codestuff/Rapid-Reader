@@ -2,7 +2,7 @@
 
 Rapid Reader 2.0 is a free, open-source native macOS app for focused long-form reading, redesigned around a quiet stage, Liquid Glass controls, and a new focus-point icon. It combines rapid serial visual presentation (RSVP) with a normal full-text reader, so you can move quickly through books and articles while still being able to inspect the original text and resume from any word.
 
-![Rapid Reader RSVP mode](docs/screenshots/rapid-reader-rsvp.png)
+![Rapid Reader reading a book one word at a time, then switching to the full text](docs/screenshots/rapid-reader-demo.gif)
 
 ## Highlights
 
