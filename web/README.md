@@ -62,8 +62,8 @@ Article import sends only the URL to the Express server, which retrieves public 
 
 `src/core` owns models, token ranges, playback, search and IndexedDB. `src/import` owns browser document parsing, including [PDF.js](https://mozilla.github.io/pdf.js/) in a worker and JSZip for EPUB and DOCX. `src/components` contains the reader UI. `server` serves the built app, healthcheck and article importer.
 
-The Railway project is **Rapid Reader**, environment **live**, service **rapid-reader**, at `https://rapid-reader.up.railway.app`. The service follows the `web-reader` branch and builds only `/web` with Railpack and Node.js 24. Railway installs dependencies from the lockfile; the build command is `npm run build` and the start command is `npm start`. Set `PORT=3001`, route the domain to port 3001, and use `/api/health` with a 30-second timeout. Watch `/web/**` for changes. No database service, volume or application secrets are required.
+The Railway project is **Rapid Reader**, environment **live**, service **rapid-reader**, at `https://rapid-reader.up.railway.app`. After merging PR #1, deploy from `main` and build only `/web` with Railpack and Node.js 24. Railway installs dependencies from the lockfile; the build command is `npm run build` and the start command is `npm start`. Set `PORT=3001`, route the domain to port 3001, and use `/api/health` with a 30-second timeout. Watch `/web/**` for changes. No database service, volume or application secrets are required.
 
-These settings are applied through the Railway plugin. New services no longer accept legacy `railway.toml` configuration. Keep the hostname stable because browser storage is scoped to it. Change the source branch deliberately if the web PR is merged later.
+These settings are applied through the Railway plugin. New services no longer accept legacy `railway.toml` configuration. Keep the hostname stable because browser storage is scoped to it.
 
 The source is covered by the repository's [MIT license](../LICENSE).

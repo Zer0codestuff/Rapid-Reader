@@ -7,7 +7,7 @@ Browser counterpart to the macOS app. Keep the native app intact. React and Type
 - Node.js 24. `npm ci`, then `npm run dev` opens the frontend on port 5173 with the article server on 3001.
 - `npm test` runs core, imports, persistence and article-service tests. `npm run build` checks TypeScript and builds the offline app. `npm start` serves it on `PORT` or 3001.
 - After `npx playwright install chromium webkit`, `npm run test:browser` runs isolated browser QA on port 4174. `RAPID_READER_QA_BROWSER=webkit` selects WebKit. `RAPID_READER_QA_URL` targets a running site. Screenshots go to ignored `../build/web-qa/`.
-- Railway project **Rapid Reader**, environment **live**, service **rapid-reader**, domain `https://rapid-reader.up.railway.app`. The service follows `web-reader` and builds only `/web` with Railpack, Node.js 24, `npm run build` and `npm start`. Set `PORT=3001`, route port 3001, use `/api/health` and watch `/web/**`. Configuration is applied through the Railway plugin; new services reject legacy `railway.toml`. Keep the domain stable and update the source branch deliberately after a future merge.
+- Railway project **Rapid Reader**, environment **live**, service **rapid-reader**, domain `https://rapid-reader.up.railway.app`. Deploy from `main` after merging PR #1 and build only `/web` with Railpack, Node.js 24, `npm run build` and `npm start`. Set `PORT=3001`, route port 3001, use `/api/health` and watch `/web/**`. Configuration is applied through the Railway plugin; new services reject legacy `railway.toml`. Keep the domain stable.
 
 ## Status and constraints
 
