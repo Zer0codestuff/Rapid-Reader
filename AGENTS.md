@@ -2,9 +2,12 @@
 
 Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `RapidReaderCore` library. Core owns imports, document models, RSVP playback, and local persistence. UI and AppKit integration live in `Sources/RapidReader`.
 
+The separate browser version lives entirely in `web/`. React, TypeScript and Vite render the same Quiet reader; IndexedDB keeps the web library local. An Express server serves the app and retrieves article URLs. See `web/AGENTS.md` and `web/README.md` for architecture and browser-specific constraints. The native app and its library remain independent.
+
 ## Work and verification
 
 - `swift test` runs the core regression tests.
+- Web: Node.js 24, `cd web && npm ci`, `npm run dev`. `npm test` verifies web core and imports; `npm run build` builds the offline app; `npm start` serves it. `npm run test:browser` uses an isolated browser and test server. It requires Playwright browsers; see `web/README.md`.
 - `./script/build_and_run.sh --build-only` builds the app bundle; omit the flag to launch.
 - `./script/package_dmg.sh <version>` packages a universal (arm64 + x86_64) release DMG with version and build number in the plist. Optional `DEVELOPER_ID_APPLICATION` and `NOTARY_PROFILE` sign with the hardened runtime and notarize.
 - Use `RAPID_READER_LIBRARY_DIR` pointing to a temporary folder for runtime QA. Never test against the user's library. Launch with `open -n --env RAPID_READER_LIBRARY_DIR=... "dist/Rapid Reader.app"` so any instance started by `open` also uses it.
@@ -37,6 +40,9 @@ Native macOS 14+ SwiftUI reader. SwiftPM builds the `RapidReader` app and `Rapid
 - Licensing and discoverability (2026-10-04, on `main` at the owner's request): the repository is MIT licensed (`LICENSE`, copyright Gabriele Monni). README opens with "free, open-source", has a `How It Compares` table against Outread and Spreeder built only from their websites, and a `License` section. The GitHub description uses the same wording so search engines and AI agents match queries such as "free open source speed reader for Mac". Recheck the competitor facts before editing that table.
 - README hero is `docs/screenshots/rapid-reader-demo.gif` (2026-10-07): a real recording of the release build with an isolated `RAPID_READER_LIBRARY_DIR` and three Project Gutenberg EPUBs, RSVP at 350 WPM followed by the text view. Recorded with `screencapture -v`, static areas stabilized, then `ffmpeg` palette and `gifsicle -O3` (900 px wide, about 1.8 MB). Keep `rapid-reader-rsvp.png`; external list entries link to it.
 - Developer ID signing, notarization, and signed update publication require the owner's credentials. Implement and verify the local workflow first, then report any missing setup.
+- Web version (2026-10-07, PR #1): browser RSVP and text reading, all seven file formats, URL and clipboard import, covers, chapters, favorites, notes, document search, per-document preferences, themes, reading statistics, local backup/restore, responsive library drawer and offline reading. The owner approved local browser data without accounts, a new Railway Rapid Reader project with a domain that excludes `production`, and the squash merge of PR #1. Deploy only the `web/` directory. The web app supplements the native app; it does not replace it.
+- Web deployment: Railway project **Rapid Reader**, environment **live**, service **rapid-reader**, stable domain `https://rapid-reader.up.railway.app`. Deploy from `main` after merging PR #1; use the Railway plugin to configure `/web`, Node.js 24, build/start commands and healthcheck. See `web/AGENTS.md` for details. Do not change the published origin casually.
+- Web validation: 23 tests, TypeScript/build, clean install and dependency audit pass. Chromium and WebKit QA passes locally and on the published HTTPS site; offline reload is verified in Chromium on the live site and in WebKit with the local server stopped. Public article import succeeds. The native source is unchanged; GitHub Actions also passed its SwiftPM tests and universal DMG build on commit `80d613e`. See `docs/validation.md` for evidence and limits.
 
 ## Constraints
 

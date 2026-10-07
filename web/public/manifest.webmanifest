@@ -1,0 +1,17 @@
+{
+  "name": "Rapid Reader",
+  "short_name": "Rapid Reader",
+  "description": "A quiet place to read, one word at a time.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1c1c1e",
+  "theme_color": "#1c1c1e",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
