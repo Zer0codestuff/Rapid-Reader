@@ -1,0 +1,47 @@
+{
+  "name": "rapid-reader-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"node --watch server/index.mjs\" \"vite --host 0.0.0.0\"",
+    "build": "tsc -b && vite build && node script/offline.mjs",
+    "start": "node server/index.mjs",
+    "test": "vitest run",
+    "test:browser": "node tests/browser.mjs",
+    "check": "tsc -b"
+  },
+  "overrides": {
+    "shell-quote": "^1.11.0"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "idb": "^8.0.3",
+    "ipaddr.js": "^2.2.0",
+    "jsdom": "^27.0.0",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.468.0",
+    "pdfjs-dist": "^6.4.299",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "undici": "^7.16.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "concurrently": "9.2.1",
+    "fake-indexeddb": "^6.2.4",
+    "playwright": "^1.63.0",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9",
+    "vitest": "^5.0.3"
+  }
+}
