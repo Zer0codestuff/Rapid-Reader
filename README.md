@@ -20,6 +20,8 @@ Rapid Reader 2.0 is a free, open-source native macOS app for focused long-form r
 
 ## Download
 
+The browser version is available at [rapid-reader.up.railway.app](https://rapid-reader.up.railway.app). It supports local file imports, RSVP and text reading, notes, search, themes and statistics, with a separate library stored in your browser. No account or cloud sync is required. See [web/README.md](web/README.md) for browser setup, backup and offline reading.
+
 The latest DMG is attached to the GitHub release for this repository.
 
 1. Download `RapidReader-<version>.dmg` from [Releases](https://github.com/Zer0codestuff/Rapid-Reader/releases).
@@ -31,17 +33,17 @@ The DMG contains a universal app for Apple Silicon and Intel Macs. Unless a rele
 
 ## How It Compares
 
-Rapid Reader is for reading on a Mac with local files and no account. Two established speed readers for comparison:
+Rapid Reader supports reading on a Mac or in a browser, with local files and no account. Two established speed readers for comparison:
 
 | | Rapid Reader | Outread | Spreeder |
 | --- | --- | --- | --- |
-| Platforms | macOS 14 or later | iOS, iPadOS, macOS | Web, Mac, Windows, iOS, Android, Chrome OS |
+| Platforms | macOS 14 or later, Web | iOS, iPadOS, macOS | Web, Mac, Windows, iOS, Android, Chrome OS |
 | Price | Free | Commercial app | Commercial license, with a free web app |
 | Open source | Yes, MIT | No | No |
 | Imports | EPUB, PDF, DOCX, RTF, HTML, Markdown, plain text, pasted text, web articles | DRM-free EPUB, PDF, DOC, RTF, TXT, web articles | 52 file and ebook formats |
 | Reading modes | RSVP and full text, with click-to-resume | RSVP and a guided highlighter | RSVP |
 
-Outread and Spreeder also run on phones and tablets. Outread includes reading exercises, and Spreeder adds AI summaries and a cloud profile. Rapid Reader is Mac only, keeps its library in a local folder, and does none of that.
+Outread and Spreeder also run on phones and tablets. Outread includes reading exercises, and Spreeder adds AI summaries and a cloud profile. Rapid Reader keeps its native library in a local folder and its web library in the browser, without those features.
 
 Details for the other apps come from the [Outread](https://outreadapp.com/) and [Spreeder](https://www.spreeder.com/) websites, checked in October 2026.
 
